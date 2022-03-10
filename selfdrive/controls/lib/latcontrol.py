@@ -8,9 +8,14 @@ MIN_STEER_SPEED = 0.3
 
 class LatControl(ABC):
   def __init__(self, CP, CI):
+    self.CP = CP
     self.sat_count_rate = 1.0 * DT_CTRL
-    self.sat_limit = CP.steerLimitTimer
+    #self.sat_limit = CP.steerLimitTimer
     self.sat_count = 0.
+
+  @property
+  def sat_limit(self):
+    return self.CP.steerLimitTimer
 
   @abstractmethod
   def update(self, active, CS, CP, VM, params, last_actuators, desired_curvature, desired_curvature_rate):

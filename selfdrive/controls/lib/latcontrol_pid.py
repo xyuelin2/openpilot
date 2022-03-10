@@ -13,12 +13,25 @@ class LatControlPID(LatControl):
                             (CP.lateralTuning.pid.kiBP, CP.lateralTuning.pid.kiV),
                             k_f=CP.lateralTuning.pid.kf, pos_limit=1.0, neg_limit=-1.0)
     self.get_steer_feedforward = CI.get_steer_feedforward_function()
+    
+    self.kf = CP.lateralTuning.pid.kf # Just storing to detect a change
 
   def reset(self):
     super().reset()
     self.pid.reset()
 
   def update(self, active, CS, CP, VM, params, last_actuators, desired_curvature, desired_curvature_rate):
+    if self.CP is not CP:
+      self.CP = CP # This should not happen.
+    
+    # k_f is immutable, and PI is too abstract for using a CP reference  
+    if CP.lateralTuning.pid.kf != self.kf:
+      self.pid.update_params(k_f=CP.lateralTuning.pid.kf)
+      self.kf = CP.lateralTuning.pid.kf
+    
+    # TODO: JJS: Ensure that changes to CP are reflected in PI controller
+    # TODO: JJS: Find a way for pid to read from something mutable directly, rather than comparing every time
+    
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steeringAngleDeg = float(CS.steeringAngleDeg)
     pid_log.steeringRateDeg = float(CS.steeringRateDeg)

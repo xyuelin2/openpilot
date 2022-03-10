@@ -43,6 +43,24 @@ class PIController():
     self.i = 0.0
     self.f = 0.0
     self.control = 0
+  
+  # Update the active PI parameters
+  def update_params(self, k_p=None, k_i=None, k_f=None, pos_limit=None, neg_limit=None, rate=None):
+    if k_p is not None:
+      self._k_p = k_p  # proportional gain
+    if k_i is not None:
+      self._k_i = k_i  # integral gain
+    if pos_limit is not None:
+      self.pos_limit = pos_limit
+    if neg_limit is not None:
+      self.neg_limit = neg_limit
+    if rate is not None:
+      self.i_unwind_rate = 0.3 / rate
+      self.i_rate = 1.0 / rate
+    if isinstance(self._k_p, Number):
+      self._k_p = [[0], [self._k_p]]
+    if isinstance(self._k_i, Number):
+      self._k_i = [[0], [self._k_i]]
 
   def update(self, setpoint, measurement, speed=0.0, override=False, feedforward=0., deadzone=0., freeze_integrator=False):
     self.speed = speed

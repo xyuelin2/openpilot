@@ -35,14 +35,34 @@ class LatControlINDI(LatControl):
     self.A_K = A - np.dot(K, C)
     self.x = np.array([[0.], [0.], [0.]])
 
-    self._RC = (CP.lateralTuning.indi.timeConstantBP, CP.lateralTuning.indi.timeConstantV)
-    self._G = (CP.lateralTuning.indi.actuatorEffectivenessBP, CP.lateralTuning.indi.actuatorEffectivenessV)
-    self._outer_loop_gain = (CP.lateralTuning.indi.outerLoopGainBP, CP.lateralTuning.indi.outerLoopGainV)
-    self._inner_loop_gain = (CP.lateralTuning.indi.innerLoopGainBP, CP.lateralTuning.indi.innerLoopGainV)
+    # self._RC = (CP.lateralTuning.indi.timeConstantBP, CP.lateralTuning.indi.timeConstantV)
+    # self._G = (CP.lateralTuning.indi.actuatorEffectivenessBP, CP.lateralTuning.indi.actuatorEffectivenessV)
+    # self._outer_loop_gain = (CP.lateralTuning.indi.outerLoopGainBP, CP.lateralTuning.indi.outerLoopGainV)
+    # self._inner_loop_gain = (CP.lateralTuning.indi.innerLoopGainBP, CP.lateralTuning.indi.innerLoopGainV)
 
-    self.steer_filter = FirstOrderFilter(0., self.RC, DT_CTRL)
+    self.steer_filter = FirstOrderFilter(0., self.RC, DT_CTRL) #steer_filter has it's RC updated by the update method, so it's ok
 
     self.reset()
+
+
+
+  @property
+  def _RC(self):
+    return (self.CP.lateralTuning.indi.timeConstantBP, self.CP.lateralTuning.indi.timeConstantV)
+  
+  @property
+  def _G(self):
+    return (self.CP.lateralTuning.indi.actuatorEffectivenessBP, self.CP.lateralTuning.indi.actuatorEffectivenessV)
+  
+  @property
+  def _outer_loop_gain(self):
+    return (self.CP.lateralTuning.indi.outerLoopGainBP, self.CP.lateralTuning.indi.outerLoopGainV)
+  
+  @property
+  def _inner_loop_gain(self):
+    return (self.CP.lateralTuning.indi.innerLoopGainBP, self.CP.lateralTuning.indi.innerLoopGainV)
+
+
 
   @property
   def RC(self):
@@ -66,6 +86,8 @@ class LatControlINDI(LatControl):
     self.speed = 0.
 
   def update(self, active, CS, CP, VM, params, last_actuators, desired_curvature, desired_curvature_rate):
+    if self.CP is not CP:
+      self.CP = CP # This should not happen.
     self.speed = CS.vEgo
     # Update Kalman filter
     y = np.array([[math.radians(CS.steeringAngleDeg)], [math.radians(CS.steeringRateDeg)]])

@@ -14,6 +14,7 @@ class LatControlLQR(LatControl):
     self.scale = CP.lateralTuning.lqr.scale
     self.ki = CP.lateralTuning.lqr.ki
 
+    #TODO: Making this live-capable would be nightmarish
     self.A = np.array(CP.lateralTuning.lqr.a).reshape((2, 2))
     self.B = np.array(CP.lateralTuning.lqr.b).reshape((2, 1))
     self.C = np.array(CP.lateralTuning.lqr.c).reshape((1, 2))

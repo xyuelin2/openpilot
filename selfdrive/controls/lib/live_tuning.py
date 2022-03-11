@@ -32,7 +32,7 @@ def app(environ, start_response):
             _CP.lateralTuning.pid.kf = kf
     
     
-    data = json.dumps(capnp_to_json(_CP))
+    data = capnp_to_json(_CP)
     start_response('200 OK', [('Content-Type', 'text/json')])
     return [data.encode()]
     

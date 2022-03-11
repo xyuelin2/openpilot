@@ -12,12 +12,14 @@ from cereal import log
 
 class LateralPlanner:
   def __init__(self, CP, use_lanelines=True, wide_camera=False):
-    self.use_lanelines = use_lanelines
+    # TODO: LateralPlanner runs in different process
+    self.CP = CP
+    self.use_lanelines = use_lanelines #TODO: JJS these options should be read from CP, no?
     self.LP = LanePlanner(wide_camera)
     self.DH = DesireHelper()
 
     self.last_cloudlog_t = 0
-    self.steer_rate_cost = CP.steerRateCost
+    #self.steer_rate_cost = CP.steerRateCost
     self.solution_invalid_cnt = 0
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE, 3))
@@ -28,6 +30,10 @@ class LateralPlanner:
 
     self.lat_mpc = LateralMpc()
     self.reset_mpc(np.zeros(4))
+
+  @property
+  def steer_rate_cost(self):
+    return self.CP.steerRateCost # TODO: The lateral planner might be a different process...
 
   def reset_mpc(self, x0=np.zeros(4)):
     self.x0 = x0

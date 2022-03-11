@@ -26,6 +26,7 @@ MAX_TIME_OFFROAD_S = 48*3600
 # TODO: JJS: Revert
 # To ease remote debugging, stay on for 2 days
 MIN_ON_TIME_S = 48*3600
+#TODO: JJS: These numbers aren't being honored anymore
 
 class PowerMonitoring:
   def __init__(self):

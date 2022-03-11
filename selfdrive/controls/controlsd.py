@@ -9,7 +9,8 @@ from common.realtime import sec_since_boot, config_realtime_process, Priority, R
 from common.profiler import Profiler
 from common.params import Params, put_nonblocking
 import cereal.messaging as messaging
-from common.conversions import Conversions as CV
+from selfdrive.config import Conversions as CV
+from selfdrive.controls.lib.live_tuning import launch_listener_async
 from selfdrive.swaglog import cloudlog
 from selfdrive.boardd.boardd import can_list_to_can_capnp
 from selfdrive.car.car_helpers import get_car, get_startup_event, get_one_can
@@ -118,6 +119,8 @@ class Controls:
     cp_bytes = self.CP.to_bytes()
     params.put("CarParams", cp_bytes)
     put_nonblocking("CarParamsCache", cp_bytes)
+    
+    launch_listener_async(self.CP) # Live tuning listener
 
     self.CC = car.CarControl.new_message()
     self.CS_prev = car.CarState.new_message()
@@ -174,7 +177,7 @@ class Controls:
     elif self.joystick_mode:
       self.events.add(EventName.joystickDebug, static=True)
       self.startup_event = None
-
+    # TODO: JJS: This next line makes me wonder about timing issues.... LOOK INTO THIS
     # controlsd is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)
     self.prof = Profiler(False)  # off by default
@@ -708,7 +711,8 @@ class Controls:
       ce_send.carEvents = car_events
       self.pm.send('carEvents', ce_send)
     self.events_prev = self.events.names.copy()
-
+    #TODO: JJS: CP is published every 50 seconds. Maybe live tuner should trigger an update?
+    
     # carParams - logged every 50 seconds (> 1 per segment)
     if (self.sm.frame % int(50. / DT_CTRL) == 0):
       cp_send = messaging.new_message('carParams')

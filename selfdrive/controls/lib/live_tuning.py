@@ -6,6 +6,7 @@ import capnp
 
 #from cereal import car
 import json
+from selfdrive.swaglog import cloudlog
 
 # POC / example web service for live tuning
 # TODO: auth, use an existing restful library
@@ -26,12 +27,15 @@ def app(environ, start_response):
     d = parse(environ['QUERY_STRING'])
     
     if d is not None and len(d) > 0:
-        kfraw = d.get('lateralTuning_pid_kf', [''])[0]
-        if kfraw is not None:
+        cloudlog.debug("live_tuning: Got Query Params")
+        kfCollection = d.get('lateralTuning_pid_kf')
+        if kfCollection is not None and len(kfCollection) > 0:
+            kfraw = kfCollection[0]
+            cloudlog.debug("live_tuning: next line is kf raw, then kf")
+            cloudlog.debug(kfraw)
             kf = float(kfraw)
+            cloudlog.debug(kf)
             _CP.lateralTuning.pid.kf = kf
-    
-    
     data = capnp_to_json(_CP)
     start_response('200 OK', [('Content-Type', 'text/json')])
     return [data.encode()]

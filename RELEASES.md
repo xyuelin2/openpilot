@@ -1,5 +1,6 @@
-Version 0.8.14-GM8 (2022-02-20)
+Version 0.8.14-GM8-Tune
 ========================
+ * Live Tuner, totally unsafe do not use
  * Further improved Bolt Tunining thanks to Darknight11
  * Reversed CC main logic with Pedal
  * CarState.gearShifter now more detailed, includes L mode!

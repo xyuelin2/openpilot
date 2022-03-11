@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import threading
 from wsgiref.simple_server import WSGIServer, make_server
+import capnp
 
 #from cereal import car
 import json
@@ -23,7 +24,8 @@ def app(environ, start_response):
     # if environ['REQUEST_METHOD'] == 'POST':
     #     start_response('200 OK', [('Content-Type', 'text/json')])
     #     return [b'']
-    data = json.dumps(_CP)
+    data = json.dumps(capnp_to_json(_CP))
+    
     start_response('200 OK', [('Content-Type', 'text/json')])
     return [data.encode()]
 
@@ -40,6 +42,41 @@ def _launch_listener():
     #TODO: error handling, etc
     httpd = make_server('', 8282, app)
     httpd.serve_forever()
+
+
+
+
+DYNAMIC_ENUM_MARKER = "_de_"
+
+def capnp_to_json(message):
+    class CapnpEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, capnp.lib.capnp._DynamicStructBuilder):
+                return obj.to_dict()
+            if isinstance(obj, capnp.lib.capnp._DynamicEnum):
+                return {DYNAMIC_ENUM_MARKER:str(obj)}
+            return json.JSONEncoder.default(self, obj)
+
+    json_string = json.dumps(message, cls=CapnpEncoder)
+
+    return json_string
+
+def json_to_capnp(capnp_message_type, json_string):
+    def as_dynamic_enum(dct):
+        if DYNAMIC_ENUM_MARKER in dct:
+            return capnp.lib.capnp._DynamicEnum(dct[DYNAMIC_ENUM_MARKER])
+        return dct
+
+    loaded_dict = json.loads(json_string, object_hook=as_dynamic_enum)
+
+    return capnp_message_type.new_message(**loaded_dict)
+
+
+
+
+
+
+
 
 
 

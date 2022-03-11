@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import threading
 from wsgiref.simple_server import WSGIServer, make_server
+from cgi import parse
 import capnp
 
 #from cereal import car
@@ -21,13 +22,25 @@ def app(environ, start_response):
     if _CP is None:
         start_response('200 OK', [('Content-Type', 'text/json')])
         return [b"Whoopsie no _CP"]
+    
+    d = parse(environ['QUERY_STRING'])
+    
+    if d is not None and len(d) > 0:
+        kfraw = d.get('lateralTuning_pid_kf', [''])[0]
+        if kfraw is not None:
+            kf = float(kfraw)
+            _CP.lateralTuning.pid.kf = kf
+    
+    
+    data = json.dumps(capnp_to_json(_CP))
+    start_response('200 OK', [('Content-Type', 'text/json')])
+    return [data.encode()]
+    
+    
     # if environ['REQUEST_METHOD'] == 'POST':
     #     start_response('200 OK', [('Content-Type', 'text/json')])
     #     return [b'']
-    data = json.dumps(capnp_to_json(_CP))
-    
-    start_response('200 OK', [('Content-Type', 'text/json')])
-    return [data.encode()]
+
 
 def launch_listener_async(CP):
     global _CP

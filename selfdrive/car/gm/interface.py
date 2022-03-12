@@ -255,7 +255,8 @@ class CarInterface(CarInterfaceBase):
       
     
     if candidate in HIGH_TORQUE:
-      ret.safetyConfigs[0].safetyParam = 1 # set appropriate safety param for increased torque limits to match values.py
+      pass
+      #ret.safetyConfigs[0].safetyParam = 1 # set appropriate safety param for increased torque limits to match values.py
          
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase

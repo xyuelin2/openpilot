@@ -34,9 +34,11 @@ def plannerd_thread(sm=None, pm=None):
 
   while True:
     sm.update()
+    #TODO: save the ref here so it can be used by long and lateral
+    CP = car.CarParams.from_bytes(params.get("CarParams", block=False))
 
     if sm.updated['modelV2']:
-      lateral_planner.update(sm)
+      lateral_planner.update(sm, CP)
       lateral_planner.publish(sm, pm)
       longitudinal_planner.update(sm)
       longitudinal_planner.publish(sm, pm)

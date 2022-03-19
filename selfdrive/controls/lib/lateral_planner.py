@@ -39,7 +39,10 @@ class LateralPlanner:
     self.x0 = x0
     self.lat_mpc.reset(x0=self.x0)
 
-  def update(self, sm):
+  def update(self, sm, CP):
+    if CP is not None:
+      self.CP = CP
+    
     v_ego = sm['carState'].vEgo
     measured_curvature = sm['controlsState'].curvature
 

@@ -4,16 +4,18 @@
 #from cereal import car
 import json
 from flask import Flask, request, jsonify
+import threading
 from selfdrive.swaglog import cloudlog
 
 app = Flask(__name__)
 
-global _CP
+_CP = None
 
 def InitTuneServer(CP):
     global _CP
     _CP = CP
-    app.run( host='0.0.0.0', port=5000, debug=True, threaded=True, use_reloader=False )
+    threading.Thread(target=lambda: app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)).start()
+    #app.run( host='0.0.0.0', port=5000, debug=True, use_reloader=False )
 
 @app.route('/CP', methods=['GET'])
 def query_records():

@@ -36,7 +36,10 @@ def updateField(chunk, key, value):
     else:
         #TODO: May want to determine field type using capnp schema instead...
         cloudlog.info(f"Live Tuner Updating '{key}' to '{value}'")
-        setattr(chunk,key,value)
+        if isinstance(key,int):
+            chunk[key] = value
+        else:
+            setattr(chunk,key,value)
 
 
 @app.route('/CP', methods=['POST'])

@@ -10,7 +10,7 @@ from common.profiler import Profiler
 from common.params import Params, put_nonblocking
 import cereal.messaging as messaging
 from common.conversions import Conversions as CV
-from selfdrive.controls.lib.live_tuning import launch_listener_async
+#from selfdrive.controls.lib.live_tuning import launch_listener_async
 from selfdrive.swaglog import cloudlog
 from selfdrive.boardd.boardd import can_list_to_can_capnp
 from selfdrive.car.car_helpers import get_car, get_startup_event, get_one_can
@@ -25,6 +25,7 @@ from selfdrive.controls.lib.latcontrol_angle import LatControlAngle
 from selfdrive.controls.lib.events import Events, ET
 from selfdrive.controls.lib.alertmanager import AlertManager, set_offroad_alert
 from selfdrive.controls.lib.vehicle_model import VehicleModel
+from selfdrive.controls.lib.tuneservice import InitTuneServer
 from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.hardware import HARDWARE, TICI, EON
 from selfdrive.manager.process_config import managed_processes
@@ -120,7 +121,7 @@ class Controls:
     params.put("CarParams", cp_bytes)
     put_nonblocking("CarParamsCache", cp_bytes)
     
-    launch_listener_async(self.CP) # Live tuning listener
+    InitTuneServer(self.CP) # Live tuning listener
 
     self.CC = car.CarControl.new_message()
     self.CS_prev = car.CarState.new_message()

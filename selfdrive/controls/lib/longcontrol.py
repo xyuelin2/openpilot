@@ -51,7 +51,7 @@ class LongControl():
     self.kf = CP.longitudinalTuning.kf # Just storing to detect a change
 
   def reset(self, v_pid):
-    """Reset PID controller and change setpoint"""
+    #"""Reset PID controller and change setpoint"""
     self.pid.reset()
     self.v_pid = v_pid
 
@@ -62,7 +62,7 @@ class LongControl():
       self.pid.update_params(k_f=CP.longitudinalTuning.kf)
       self.kf = CP.longitudinalTuning.kf
     
-    """Update longitudinal control. This updates the state machine and runs a PID loop"""
+    #"""Update longitudinal control. This updates the state machine and runs a PID loop"""
     # Interp control trajectory
     speeds = long_plan.speeds
     if len(speeds) == CONTROL_N:

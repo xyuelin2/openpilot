@@ -236,9 +236,9 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = -1 * CV.MPH_TO_MS
       ret.mass = 2731. + STD_CARGO_KG # From spec
       ret.wheelbase = 3.302 # From spec
-      ret.steerRatio = 17.3 # From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
+      ret.steerRatio = 20.083 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
       ret.centerToFront = ret.wheelbase * 0.49
-      ret.steerActuatorDelay = 0.075 # TODO: review eisting route
+      ret.steerActuatorDelay = 0.075 # This is very close - I got 0.074
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar

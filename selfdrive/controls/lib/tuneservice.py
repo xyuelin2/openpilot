@@ -29,14 +29,14 @@ def query_records():
 def updateField(chunk, key, value):
     if isinstance(value, dict):
         for subKey in value:
-            updateField(chunk[key],subKey,value[subKey])
+            updateField(getattr(chunk,key),subKey,value[subKey])
     elif isinstance(value, list):
         for x in range(len(value)):
-            updateField(chunk[key],x,value[x])
+            updateField(getattr(chunk,key),x,value[x])
     else:
         #TODO: May want to determine field type using capnp schema instead...
         cloudlog.info(f"Live Tuner Updating '{key}' to '{value}'")
-        chunk[key] = value
+        setattr(chunk,key,value)
 
 
 @app.route('/CP', methods=['POST'])

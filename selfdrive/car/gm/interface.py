@@ -241,7 +241,7 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.SUBURBAN:
       ret.minEnableSpeed = -1. # engage speed is decided by pcmFalse
       ret.minSteerSpeed = -1 * CV.MPH_TO_MS
-      ret.mass = 1278. + STD_CARGO_KG
+      ret.mass = 2729. + STD_CARGO_KG
       ret.wheelbase = 3.302
       ret.steerRatio = 16.3 # COPIED FROM SILVERADO
       ret.centerToFront = ret.wheelbase * 0.49

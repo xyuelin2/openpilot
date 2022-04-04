@@ -4,7 +4,7 @@ from math import fabs
 
 from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.gm.values import CAR, HIGH_TORQUE, CruiseButtons, \
+from selfdrive.car.gm.values import CAR, CruiseButtons, \
                                     AccState, CarControllerParams, NO_ASCM
 from selfdrive.car.interfaces import CarInterfaceBase
 
@@ -44,7 +44,7 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
-    ret.unsafeMode = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS
+    ret.alternativeExperience = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS
     ret.pcmCruise = False  # stock cruise control is kept off
     ret.openpilotLongitudinalControl = True # ASCM vehicles use OP for long
     ret.radarOffCan = False # ASCM vehicles (typically) have radar
@@ -254,9 +254,6 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
       
     
-    if candidate in HIGH_TORQUE:
-      pass
-      #ret.safetyConfigs[0].safetyParam = 1 # set appropriate safety param for increased torque limits to match values.py
          
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase

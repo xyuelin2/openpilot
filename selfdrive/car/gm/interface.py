@@ -139,6 +139,8 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 14.4  # end to end is 13.46
       ret.centerToFront = ret.wheelbase * 0.4
       ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_acadia()
+      #ret.steerMaxBP = [10., 25.]
+      #ret.steerMaxV = [1., 1.05]
 
     elif candidate == CAR.BUICK_REGAL:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
@@ -183,6 +185,9 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
       ret.lateralTuning.pid.kf = 0.0002
+      #Deprecated
+      #ret.steerMaxBP = [10., 25.]
+      #ret.steerMaxV = [1., 1.2]
       
       # TODO: Needs refinement for stop and go, doesn't fully stop
       # Assumes the Bolt is using L-Mode for regen braking
@@ -267,14 +272,9 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   # returns a car.CarState
-  def update(self, c, can_strings):
-    self.cp.update_strings(can_strings)
-    self.cp_loopback.update_strings(can_strings)
-    self.cp_body.update_strings(can_strings)
-
+  def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_loopback, self.cp_body)
-    #Intentionally not checking canvalid for body / SW
-    ret.canValid = self.cp.can_valid and self.cp_loopback.can_valid
+
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     buttonEvents = []
@@ -324,20 +324,8 @@ class CarInterface(CarInterfaceBase):
 
     ret.events = events.to_msg()
 
-    # copy back carState packet to CS
-    self.CS.out = ret.as_reader()
-
-    return self.CS.out
+    return ret
 
   def apply(self, c):
-    hud_control = c.hudControl
-    hud_v_cruise = hud_control.setSpeed
-    if hud_v_cruise > 70:
-      hud_v_cruise = 0
-
-    ret = self.CC.update(c, self.CS, self.frame, c.actuators,
-                         hud_v_cruise, hud_control.lanesVisible,
-                         hud_control.leadVisible, hud_control.visualAlert)
-
-    self.frame += 1
+    ret = self.CC.update(c, self.CS)
     return ret

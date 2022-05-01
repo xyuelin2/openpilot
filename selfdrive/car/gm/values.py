@@ -4,7 +4,9 @@ Ecu = car.CarParams.Ecu
 
 class CarControllerParams():
   def __init__(self, CP):  
-    self.STEER_MAX = 300  # Safety limit, not LKA max. Trucks use 600.
+    self.STEER_MAX = 300  # Safety limit, not LKA max. JJS: This is not true
+    # STEER_MAX is used for the output calculation and MUST be left at 300
+    # There are no GM EPS racks capable of more than 3 N/m of assist torque. DO NOT CHANGE IT
     self.STEER_STEP = 2  # control frames per command
     self.STEER_DELTA_UP = 7
     self.STEER_DELTA_DOWN = 17
@@ -30,7 +32,7 @@ class CarControllerParams():
     # -3.5 m/s^2 as per planner limits
 
     # TODO if this bump works, it belongs in interface per car
-    self.ACCEL_MAX = 4. # m/s^2
+    self.ACCEL_MAX = 2. # m/s^2
     self.ACCEL_MIN = -4. # m/s^2
     
     if CP.carFingerprint in NO_ASCM:
@@ -38,12 +40,18 @@ class CarControllerParams():
       #self.STEER_DELTA_UP = 3          # ~0.75s time to peak torque (255/50hz/0.75s)
       #self.STEER_DELTA_DOWN = 7       # ~0.3s from peak torque to zero
     elif CP.carFingerprint in HIGH_TORQUE:
-      self.STEER_MAX = 600  # Safety limit, not LKA max. Trucks use 600.
-      self.STEER_DELTA_UP = 14
-      self.STEER_DELTA_DOWN = 34
-      self.STEER_DRIVER_ALLOWANCE = 100
-      self.STEER_DRIVER_MULTIPLIER = 4
-      self.STEER_DRIVER_FACTOR = 100
+      pass
+      # JJS: HIGH_TORQUE was a failed experiment. The EPS even on trucks
+      # will apply a max of 3 N/m - or a value of 300
+      # Increasing this causes OP to think it has more torque than it does
+      # and willl cause your car to NOT alert you when it is about to cross
+      # lanes due to lack of torque.
+      # DO NOT CHANGE THIS VALUE - it is unsafe
+      #self.STEER_MAX = 600  # 
+      #self.STEER_DELTA_DOWN = 34
+      #self.STEER_DRIVER_ALLOWANCE = 100
+      #self.STEER_DRIVER_MULTIPLIER = 4
+      #self.STEER_DRIVER_FACTOR = 100
     
     #if CP.enableGasInterceptor:
     #TODO: Pedal may need different accel_max and min?  

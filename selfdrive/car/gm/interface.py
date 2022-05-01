@@ -142,8 +142,9 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4
       ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_acadia()
-      ret.steerMaxBP = [10., 25.]
-      ret.steerMaxV = [1., 1.05]
+      # No other car in the entire codebase touches these
+      #ret.steerMaxBP = [10., 25.]
+      #ret.steerMaxV = [1., 1.05]
 
     elif candidate == CAR.BUICK_REGAL:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
@@ -187,8 +188,9 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.26], [0.01, 0.02]]
       ret.lateralTuning.pid.kf = 0.0001
-      ret.steerMaxBP = [10., 25.]
-      ret.steerMaxV = [1., 1.2]
+      # No other car in the entire codebase touches these
+      #ret.steerMaxBP = [10., 25.]
+      #ret.steerMaxV = [1., 1.2]
       
       # TODO: Needs refinement for stop and go, doesn't fully stop
       # Assumes the Bolt is using L-Mode for regen braking
@@ -262,8 +264,9 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.26], [0.01, 0.02]]
       ret.lateralTuning.pid.kf = 0.0001
-      ret.steerMaxBP = [10., 25.]
-      ret.steerMaxV = [1., 1.2]
+      # Not used anywhere else; output is truncated to +-1 anyway
+      #ret.steerMaxBP = [10., 25.]
+      #ret.steerMaxV = [1., 1.2]
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # Using Stock ACC
       ret.radarOffCan = True # No Radar

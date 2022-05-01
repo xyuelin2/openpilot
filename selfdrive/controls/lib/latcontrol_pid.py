@@ -1,16 +1,16 @@
 import math
 
-from selfdrive.controls.lib.pid import PIDController
-from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from cereal import log
+from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
+from selfdrive.controls.lib.pid import PIDController
 
 
 class LatControlPID(LatControl):
   def __init__(self, CP, CI):
     super().__init__(CP, CI)
     self.pid = PIDController((CP.lateralTuning.pid.kpBP, CP.lateralTuning.pid.kpV),
-                            (CP.lateralTuning.pid.kiBP, CP.lateralTuning.pid.kiV),
-                            k_f=CP.lateralTuning.pid.kf, pos_limit=1.0, neg_limit=-1.0)
+                             (CP.lateralTuning.pid.kiBP, CP.lateralTuning.pid.kiV),
+                             k_f=CP.lateralTuning.pid.kf, pos_limit=self.steer_max, neg_limit=-self.steer_max)
     self.get_steer_feedforward = CI.get_steer_feedforward_function()
     
     self.kf = CP.lateralTuning.pid.kf # Just storing to detect a change
@@ -19,18 +19,19 @@ class LatControlPID(LatControl):
     super().reset()
     self.pid.reset()
 
-  def update(self, active, CS, CP, VM, params, last_actuators, desired_curvature, desired_curvature_rate):
-    if self.CP is not CP:
-      self.CP = CP # This should not happen.
+  def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
+    if self.CP is not CS.CP:
+      self.CP = CS.CP # This should not happen.
     
     # k_f is immutable, and PI is too abstract for using a CP reference  
-    if CP.lateralTuning.pid.kf != self.kf:
-      self.pid.update_params(k_f=CP.lateralTuning.pid.kf)
-      self.kf = CP.lateralTuning.pid.kf
+    if CS.CP.lateralTuning.pid.kf != self.kf:
+      self.pid.update_params(k_f=CS.CP.lateralTuning.pid.kf)
+      self.kf = CS.CP.lateralTuning.pid.kf
     
     # TODO: JJS: Ensure that changes to CP are reflected in PI controller
     # TODO: JJS: Find a way for pid to read from something mutable directly, rather than comparing every time
-    
+
+
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steeringAngleDeg = float(CS.steeringAngleDeg)
     pid_log.steeringRateDeg = float(CS.steeringRateDeg)
@@ -46,9 +47,6 @@ class LatControlPID(LatControl):
       pid_log.active = False
       self.pid.reset()
     else:
-      self.pid.pos_limit = self.steer_max
-      self.pid.neg_limit = -self.steer_max
-
       # offset does not contribute to resistive torque
       steer_feedforward = self.get_steer_feedforward(angle_steers_des_no_offset, CS.vEgo)
 

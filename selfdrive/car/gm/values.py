@@ -8,6 +8,7 @@ class CarControllerParams():
     # STEER_MAX is used for the output calculation and MUST be left at 300
     # There are no GM EPS racks capable of more than 3 N/m of assist torque. DO NOT CHANGE IT
     self.STEER_STEP = 2  # control frames per command
+    #TDOD: CONFIRM I'm pretty sure these are applied to the ABS() of the torque. If not, it would end up being a left/right difference...
     self.STEER_DELTA_UP = 7
     self.STEER_DELTA_DOWN = 17
     self.MIN_STEER_SPEED = 3.  # m/s
@@ -40,18 +41,20 @@ class CarControllerParams():
       #self.STEER_DELTA_UP = 3          # ~0.75s time to peak torque (255/50hz/0.75s)
       #self.STEER_DELTA_DOWN = 7       # ~0.3s from peak torque to zero
     elif CP.carFingerprint in HIGH_TORQUE:
-      pass
-      # JJS: HIGH_TORQUE was a failed experiment. The EPS even on trucks
+      # JJS: HIGH_TORQUE was a confirmed failed experiment. The EPS even on trucks
       # will apply a max of 3 N/m - or a value of 300
       # Increasing this causes OP to think it has more torque than it does
       # and willl cause your car to NOT alert you when it is about to cross
       # lanes due to lack of torque.
       # DO NOT CHANGE THIS VALUE - it is unsafe
-      #self.STEER_MAX = 600  # 
-      #self.STEER_DELTA_DOWN = 34
-      #self.STEER_DRIVER_ALLOWANCE = 100
-      #self.STEER_DRIVER_MULTIPLIER = 4
-      #self.STEER_DRIVER_FACTOR = 100
+      #self.STEER_MAX = 600
+      # TODO: More than likely if these values need changing
+      # It should apply to all GM cars
+      self.STEER_DELTA_UP = 14 # This was missing - could have been causing problems
+      self.STEER_DELTA_DOWN = 34
+      self.STEER_DRIVER_ALLOWANCE = 100
+      self.STEER_DRIVER_MULTIPLIER = 4
+      self.STEER_DRIVER_FACTOR = 100
     
     #if CP.enableGasInterceptor:
     #TODO: Pedal may need different accel_max and min?  

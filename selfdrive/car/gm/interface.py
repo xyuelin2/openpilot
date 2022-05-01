@@ -243,14 +243,29 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.302 # From spec
       ret.steerRatio = 20.083 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
       ret.centerToFront = ret.wheelbase * 0.49
-      ret.steerActuatorDelay = 0.038 # This is very close - I got 0.074
+      
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
+      ret.lateralTuneDivided = True # It seems trucks need different tune for right vs left turn
+      # positive = clockwise = right
+      # negative = ccw = left
+      # left turns seems snappier and stronger
       
+      # Tune for Right turns
+      ret.steerActuatorDelay = 0.038
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.08]]
-      ret.lateralTuning.pid.kf = 0.000060
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.22], [0.01, 0.08]]
+      ret.lateralTuning.pid.kf = 0.00007
+
+      # Tune for Left turns
+      #TODO: maybe use array insteda of static vals
+      #TODO: would be better to have a BP based on torque to pick the pid tune
+      ret.steerActuatorDelayNegative = 0.038
+      ret.lateralTuning.pidNegative.kpBP, ret.lateralTuning.pidNegative.kiBP = [[10., 41.0], [10., 41.0]]
+      ret.lateralTuning.pidNegative.kpV, ret.lateralTuning.pidNegative.kiV = [[0.13, 0.24], [0.01, 0.08]]
+      ret.lateralTuning.pidNegative.kf = 0.00006
+
       tire_stiffness_factor = 1.0
       
       # Example PID tune from a Kia

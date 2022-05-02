@@ -15,22 +15,25 @@ class LatControlPID(LatControl):
     
     self.kf = CP.lateralTuning.pid.kf # Just storing to detect a change
 
+    self.last_error_is_negative = False
+    self.lateralTuneDivided = CP.lateralTuneDivided # storing to detect change
+
   def reset(self):
     super().reset()
     self.pid.reset()
+
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     if self.CP is not CS.CP:
       self.CP = CS.CP # This should not happen.
     
     # k_f is immutable, and PI is too abstract for using a CP reference  
-    if CS.CP.lateralTuning.pid.kf != self.kf:
-      self.pid.update_params(k_f=CS.CP.lateralTuning.pid.kf)
-      self.kf = CS.CP.lateralTuning.pid.kf
+    if self.CP.lateralTuning.pid.kf != self.kf:
+      self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf)
+      self.kf =self.CP.lateralTuning.pid.kf
     
     # TODO: JJS: Ensure that changes to CP are reflected in PI controller
     # TODO: JJS: Find a way for pid to read from something mutable directly, rather than comparing every time
-
 
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steeringAngleDeg = float(CS.steeringAngleDeg)
@@ -40,6 +43,38 @@ class LatControlPID(LatControl):
     angle_steers_des = angle_steers_des_no_offset + params.angleOffsetDeg
     error = angle_steers_des - CS.steeringAngleDeg
 
+    # This is messy. Normally not divided and we are using pid
+    # Fingers crossed error's sign matches (normally) the likely torque sign
+    # If lateralTuneDivided changes to false when it was True
+    # We need to switch from pidNegative to pid
+    # I'm sure there is a better way
+    if self.CP.lateralTuneDivided:
+      self.lateralTuneDivided = True
+      if self.last_error_is_negative != (error < 0):
+        if error < 0:
+          self.pid.update_params(k_f=self.CP.lateralTuning.pidNegative.kf,
+                                k_p=(self.CP.lateralTuning.pidNegative.kpBP, self.CP.lateralTuning.pidNegative.kpV),
+                                k_i=(self.CP.lateralTuning.pidNegative.kiBP, self.CP.lateralTuning.pidNegative.kiV)
+                                )
+          self.kf = self.CP.lateralTuning.pidNegative.kf
+        else:
+          self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
+                                k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
+                                k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
+                                )
+          self.kf = self.CP.lateralTuning.pid.kf
+        self.last_error_is_negative = (error < 0)
+      else:
+        if self.lateralTuneDivided != self.CP.lateralTuneDivided:
+          self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
+                                k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
+                                k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
+                                )
+          self.kf = self.CP.lateralTuning.pid.kf
+          self.lateralTuneDivided = False
+
+
+
     pid_log.steeringAngleDesiredDeg = angle_steers_des
     pid_log.angleError = error
     if CS.vEgo < MIN_STEER_SPEED or not active:
@@ -47,6 +82,7 @@ class LatControlPID(LatControl):
       pid_log.active = False
       self.pid.reset()
     else:
+
       # offset does not contribute to resistive torque
       steer_feedforward = self.get_steer_feedforward(angle_steers_des_no_offset, CS.vEgo)
 

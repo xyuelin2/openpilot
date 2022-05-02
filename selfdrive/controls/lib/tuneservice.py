@@ -19,7 +19,7 @@ def InitTuneServer(CP):
 
 @app.route('/CP', methods=['GET'])
 def query_records():
-  global _CP
+  global _CP # pylint: disable=global-variable-not-assigned
   if _CP is None:
     return jsonify({'error': 'data not found'})
   
@@ -44,7 +44,7 @@ def updateField(chunk, key, value):
 
 @app.route('/CP', methods=['POST'])
 def update_record():
-  global _CP
+  global _CP # pylint: disable=global-variable-not-assigned
   updates = json.loads(request.data)
   for key in updates:
     updateField(_CP,key,updates[key])

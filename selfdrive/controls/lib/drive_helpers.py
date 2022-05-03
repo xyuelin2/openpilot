@@ -101,7 +101,7 @@ def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, curvature_rates):
   # in high delay cases some corrections never even get commanded. So just use
   # psi to calculate a simple linearization of desired curvature
   curvature_diff_from_psi = psi / (max(v_ego, 1e-1) * delay) - current_curvature
-  desired_curvature = current_curvature + 2 * curvature_diff_from_psi
+  desired_curvature = current_curvature + 2 * curvature_diff_from_psi # TODO: Ambiguous OOP - add parens
 
   v_ego = max(v_ego, 0.1)
   max_curvature_rate = MAX_LATERAL_JERK / (v_ego**2)

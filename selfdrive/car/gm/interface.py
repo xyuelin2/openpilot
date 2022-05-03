@@ -262,9 +262,9 @@ class CarInterface(CarInterfaceBase):
       #TODO: maybe use array insteda of static vals
       #TODO: would be better to have a BP based on torque to pick the pid tune
       ret.steerActuatorDelayNegative = 0.038
-      ret.lateralTuning.pidNegative.kpBP, ret.lateralTuning.pidNegative.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pidNegative.kpV, ret.lateralTuning.pidNegative.kiV = [[0.13, 0.24], [0.01, 0.08]]
-      ret.lateralTuning.pidNegative.kf = 0.00006
+      ret.lateralTuningNegative.pid.kpBP, ret.lateralTuningNegative.pid.kiBP = [[10., 41.0], [10., 41.0]]
+      ret.lateralTuningNegative.pid.kpV, ret.lateralTuningNegative.pid.kiV = [[0.13, 0.24], [0.01, 0.08]]
+      ret.lateralTuningNegative.pid.kf = 0.00006
 
       tire_stiffness_factor = 1.0
       

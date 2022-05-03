@@ -48,15 +48,16 @@ class LatControlPID(LatControl):
     # If lateralTuneDivided changes to false when it was True
     # We need to switch from pidNegative to pid
     # I'm sure there is a better way
+    # TODO: JJS: If this works, need to abstract at the latcontrol level as well as controlsd
     if self.CP.lateralTuneDivided:
       self.lateralTuneDivided = True
       if self.last_error_is_negative != (error < 0):
         if error < 0:
-          self.pid.update_params(k_f=self.CP.lateralTuning.pidNegative.kf,
-                                k_p=(self.CP.lateralTuning.pidNegative.kpBP, self.CP.lateralTuning.pidNegative.kpV),
-                                k_i=(self.CP.lateralTuning.pidNegative.kiBP, self.CP.lateralTuning.pidNegative.kiV)
+          self.pid.update_params(k_f=self.CP.lateralTuningNegative.pid.kf,
+                                k_p=(self.CP.lateralTuningNegative.pid.kpBP, self.CP.lateralTuningNegative.pid.kpV),
+                                k_i=(self.CP.lateralTuningNegative.pid.kiBP, self.CP.lateralTuningNegative.pid.kiV)
                                 )
-          self.kf = self.CP.lateralTuning.pidNegative.kf
+          self.kf = self.CP.lateralTuningNegative.pid.kf
         else:
           self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
                                 k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
@@ -82,7 +83,7 @@ class LatControlPID(LatControl):
       pid_log.active = False
       self.pid.reset()
     else:
-
+      # TODO: JJS: feedforward function may need to be splitable as well
       # offset does not contribute to resistive torque
       steer_feedforward = self.get_steer_feedforward(angle_steers_des_no_offset, CS.vEgo)
 

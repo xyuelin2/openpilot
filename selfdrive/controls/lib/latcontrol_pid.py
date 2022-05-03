@@ -3,6 +3,7 @@ import math
 from cereal import log
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
+from selfdrive.swaglog import cloudlog
 
 
 class LatControlPID(LatControl):
@@ -50,31 +51,37 @@ class LatControlPID(LatControl):
     # We need to switch from pidNegative to pid
     # I'm sure there is a better way
     # TODO: JJS: If this works, need to abstract at the latcontrol level as well as controlsd
+
+    LR_SPLIT_PT = 0.0001 # PID should use the negative turn close to zero
+    # TODO: Abstract the split point?
+
     if self.CP.lateralTuneDivided:
       self.lateralTuneDivided = True
-      if self.last_error_is_negative != (error < 0):
-        if error < 0:
+      if self.last_error_is_negative != (error < LR_SPLIT_PT): # Error has changed sign
+        if error < LR_SPLIT_PT:
           self.pid.update_params(k_f=self.CP.lateralTuningNegative.pid.kf,
                                 k_p=(self.CP.lateralTuningNegative.pid.kpBP, self.CP.lateralTuningNegative.pid.kpV),
                                 k_i=(self.CP.lateralTuningNegative.pid.kiBP, self.CP.lateralTuningNegative.pid.kiV)
                                 )
           self.kf = self.CP.lateralTuningNegative.pid.kf
+          cloudlog.info("PID switched to negative tune, kf: {self.kf}")
         else:
           self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
                                 k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
                                 k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
                                 )
           self.kf = self.CP.lateralTuning.pid.kf
-        self.last_error_is_negative = (error < 0)
-      else:
-        if self.lateralTuneDivided != self.CP.lateralTuneDivided:
-          self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
-                                k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
-                                k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
-                                )
-          self.kf = self.CP.lateralTuning.pid.kf
-          self.lateralTuneDivided = False
-
+          cloudlog.info("PID switched to positive tune, kf: {self.kf}")
+        self.last_error_is_negative = (error < LR_SPLIT_PT)
+    else: # lateral tune divided is disabled
+      if self.lateralTuneDivided != self.CP.lateralTuneDivided: # check if split tune option changed
+        self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
+                              k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
+                              k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
+                              )
+        self.kf = self.CP.lateralTuning.pid.kf
+        cloudlog.info("PID switched to positive tune because split disabled, kf: {self.kf}")
+        self.lateralTuneDivided = False
 
 
     pid_log.steeringAngleDesiredDeg = angle_steers_des

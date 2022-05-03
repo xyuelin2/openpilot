@@ -85,8 +85,8 @@ class LatControlINDI(LatControl):
     self.speed = 0.
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
-    if self.CP is not CS.CP:
-      self.CP = CS.CP # This should not happen.
+    # if self.CP is not CS.CP:
+    #   self.CP = CS.CP # This should not happen.
     self.speed = CS.vEgo
     # Update Kalman filter
     y = np.array([[math.radians(CS.steeringAngleDeg)], [math.radians(CS.steeringRateDeg)]])

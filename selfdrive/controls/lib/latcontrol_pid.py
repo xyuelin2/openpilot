@@ -24,8 +24,9 @@ class LatControlPID(LatControl):
 
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
-    if self.CP is not CS.CP:
-      self.CP = CS.CP # This should not happen.
+    # if self.CP is not CS.CP:
+    #   self.CP = CS.CP # This should not happen.
+    # CP param removed
     
     # k_f is immutable, and PI is too abstract for using a CP reference  
     if self.CP.lateralTuning.pid.kf != self.kf:

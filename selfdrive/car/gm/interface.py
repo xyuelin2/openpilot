@@ -5,7 +5,7 @@ from math import fabs
 from common.conversions import Conversions as CV
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.gm.values import CAR, CruiseButtons, \
-                                    AccState, CarControllerParams, NO_ASCM
+                                     CarControllerParams, NO_ASCM
 from selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
@@ -258,6 +258,29 @@ class CarInterface(CarInterfaceBase):
       # ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
       
+
+    elif candidate == CAR.BOLT_EUV:
+      ret.minEnableSpeed = -1
+      ret.minSteerSpeed = 5 * CV.MPH_TO_MS
+      ret.mass = 1616. + STD_CARGO_KG
+      ret.wheelbase = 2.60096
+      ret.steerRatio = 16.8
+      ret.steerRatioRear = 0.
+      ret.centerToFront = 2.0828 #ret.wheelbase * 0.4 # wild guess
+      tire_stiffness_factor = 1.0
+      # TODO: Improve stability in turns 
+      # still working on improving lateral
+      ret.steerRateCost = 0.5
+      ret.steerActuatorDelay = 0.
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
+      ret.lateralTuning.pid.kf = 0.0002
+      # ret.steerMaxBP = [10., 25.]
+      # ret.steerMaxV = [1., 1.2]
+      ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
+      ret.openpilotLongitudinalControl = False # Using Stock ACC
+      ret.radarOffCan = True # No Radar
+      # Note: No Long tuning as we are using stock long
     
          
     # TODO: get actual value, for now starting with reasonable value for
@@ -308,8 +331,6 @@ class CarInterface(CarInterfaceBase):
       events.add(EventName.belowEngageSpeed)
     if ret.cruiseState.standstill:
       events.add(EventName.resumeRequired)
-    if (self.CS.CP.carFingerprint not in NO_ASCM) and self.CS.pcm_acc_status == AccState.FAULTED:
-      events.add(EventName.accFaulted)
     if ret.vEgo < self.CP.minSteerSpeed:
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 

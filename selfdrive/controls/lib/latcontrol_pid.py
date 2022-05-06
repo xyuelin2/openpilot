@@ -74,7 +74,7 @@ class LatControlPID(LatControl):
       # The sign of the split point biases the opposite sign around zero
       # TODO: JJS: look at raw values for LateralPIDState.steeringAngleDesiredDeg
       # When the wheel is close to center there will probably be an eyeball range
-      angle_is_negative = (angle_steers_des < LR_SPLIT_PT)
+      angle_is_negative = ((-angle_steers_des) < LR_SPLIT_PT)
       pid_log.usingNegativeTune = angle_is_negative
       if self.last_angle_is_negative != angle_is_negative: # Angle has changed sign
         if angle_is_negative:

@@ -52,7 +52,7 @@ class LatControlPID(LatControl):
     # I'm sure there is a better way
     # TODO: JJS: If this works, need to abstract at the latcontrol level as well as controlsd
 
-    LR_SPLIT_PT = 0.1 # Degrees to offset the zero pt for L/R split.  PID should use the negative turn close to zero
+    LR_SPLIT_PT = 0.5 # Degrees to offset the zero pt for L/R split.  PID should use the negative turn close to zero
     # TODO: Abstract the split point?
 
     if (self.lateralTuneDivided != self.CP.lateralTuneDivided):

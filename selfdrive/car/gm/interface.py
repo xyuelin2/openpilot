@@ -253,7 +253,7 @@ class CarInterface(CarInterfaceBase):
       # left turns seems snappier and stronger
       
       # Tune for Right turns
-      ret.steerActuatorDelay = 0.038
+      ret.steerActuatorDelay = 0.2
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.22], [0.01, 0.08]]
       ret.lateralTuning.pid.kf = 0.00007
@@ -261,7 +261,7 @@ class CarInterface(CarInterfaceBase):
       # Tune for Left turns
       #TODO: maybe use array insteda of static vals
       #TODO: would be better to have a BP based on torque to pick the pid tune
-      ret.steerActuatorDelayNegative = 0.038
+      ret.steerActuatorDelayNegative = 0.2
       ret.lateralTuningNegative.pid.kpBP, ret.lateralTuningNegative.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuningNegative.pid.kpV, ret.lateralTuningNegative.pid.kiV = [[0.13, 0.24], [0.01, 0.08]]
       ret.lateralTuningNegative.pid.kf = 0.00006

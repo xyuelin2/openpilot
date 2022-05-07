@@ -57,8 +57,8 @@ class CarInterface(CarInterfaceBase):
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    
-    
+
+
     # LKAS only - no radar, no long 
     if candidate in NO_ASCM:
       ret.openpilotLongitudinalControl = False
@@ -94,7 +94,7 @@ class CarInterface(CarInterfaceBase):
     
     if ret.enableGasInterceptor:
       ret.openpilotLongitudinalControl = True
-
+    
     if candidate == CAR.VOLT or candidate == CAR.VOLT_NR:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
@@ -295,6 +295,12 @@ class CarInterface(CarInterfaceBase):
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
+
+    if ret.forceVoacc:
+      ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
+      ret.openpilotLongitudinalControl = True
+      ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
+
 
     return ret
 

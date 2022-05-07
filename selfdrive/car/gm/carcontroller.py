@@ -5,7 +5,7 @@ from common.numpy_fast import interp, clip
 from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_std_steer_torque_limits, create_gas_interceptor_command
 from selfdrive.car.gm import gmcan
-from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams
+from selfdrive.car.gm.values import BRAKE_ON_PT_BUS, DBC, NO_ASCM, CanBus, CarControllerParams
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 GearShifter = car.CarState.GearShifter
@@ -62,8 +62,10 @@ class CarController:
       
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
 
+    #if (CS.CP.carFingerprint not in NO_ASCM or CS.CP.forceVoacc) and CS.CP.openpilotLongitudinalControl and not CS.CP.pcmCruise:
+
     # TODO: All three conditions should not be required - really only last two?
-    if CS.CP.carFingerprint not in NO_ASCM and CS.CP.openpilotLongitudinalControl and not CS.CP.pcmCruise:
+    if (CS.CP.carFingerprint not in NO_ASCM or CS.CP.forceVoacc) and CS.CP.openpilotLongitudinalControl:
       # Gas/regen and brakes - all at 25Hz
       if (self.frame % 4) == 0:
         if not CC.longActive:
@@ -79,7 +81,11 @@ class CarController:
         near_stop = CC.longActive and (CS.out.vEgo < self.params.NEAR_STOP_BRAKE_PHASE)
         # GasRegenCmdActive needs to be 1 to avoid cruise faults. It describes the ACC state, not actuation
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, CC.enabled, at_full_stop))
-        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
+        # This is a dirty hack
+        if CS.CP.carFingerprint in BRAKE_ON_PT_BUS:
+          can_sends.append(gmcan.create_friction_brake_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_brake, idx, near_stop, at_full_stop))
+        else:
+          can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
 
       # Send dashboard UI commands (ACC status), 25hz
       if (self.frame % 4) == 0:
@@ -87,21 +93,22 @@ class CarController:
         can_sends.append(gmcan.create_acc_dashboard_command(self.packer_pt, CanBus.POWERTRAIN, CC.enabled,
                                                             hud_v_cruise * CV.MS_TO_KPH, hud_control.leadVisible, send_fcw))
 
-      # Radar needs to know current speed and yaw rate (50hz),
-      # and that ADAS is alive (10hz)
-      time_and_headlights_step = 10
-      tt = self.frame * DT_CTRL
+      if not CS.CP.radarOffCan:
+        # Radar needs to know current speed and yaw rate (50hz),
+        # and that ADAS is alive (10hz)
+        time_and_headlights_step = 10
+        tt = self.frame * DT_CTRL
 
-      if self.frame % time_and_headlights_step == 0:
-        idx = (self.frame // time_and_headlights_step) % 4
-        can_sends.append(gmcan.create_adas_time_status(CanBus.OBSTACLE, int((tt - self.start_time) * 60), idx))
-        can_sends.append(gmcan.create_adas_headlights_status(self.packer_obj, CanBus.OBSTACLE))
+        if self.frame % time_and_headlights_step == 0:
+          idx = (self.frame // time_and_headlights_step) % 4
+          can_sends.append(gmcan.create_adas_time_status(CanBus.OBSTACLE, int((tt - self.start_time) * 60), idx))
+          can_sends.append(gmcan.create_adas_headlights_status(self.packer_obj, CanBus.OBSTACLE))
 
-      speed_and_accelerometer_step = 2
-      if self.frame % speed_and_accelerometer_step == 0:
-        idx = (self.frame // speed_and_accelerometer_step) % 4
-        can_sends.append(gmcan.create_adas_steering_status(CanBus.OBSTACLE, idx))
-        can_sends.append(gmcan.create_adas_accelerometer_speed_status(CanBus.OBSTACLE, CS.out.vEgo, idx))
+        speed_and_accelerometer_step = 2
+        if self.frame % speed_and_accelerometer_step == 0:
+          idx = (self.frame // speed_and_accelerometer_step) % 4
+          can_sends.append(gmcan.create_adas_steering_status(CanBus.OBSTACLE, idx))
+          can_sends.append(gmcan.create_adas_accelerometer_speed_status(CanBus.OBSTACLE, CS.out.vEgo, idx))
 
       if self.frame % self.params.ADAS_KEEPALIVE_STEP == 0:
         can_sends += gmcan.create_adas_keepalive(CanBus.POWERTRAIN)
@@ -158,7 +165,12 @@ class CarController:
           pedal_gas = clip(actuators.accel, 0., 1.)
           can_sends.append(create_gas_interceptor_command(self.packer_pt, pedal_gas, idx))
         else:
+          # TODO: not sure if this condition should be here. Also we've got some duplication...
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, CC.enabled, at_full_stop))
+          if CS.CP.carFingerprint in BRAKE_ON_PT_BUS:
+            can_sends.append(gmcan.create_friction_brake_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_brake, idx, near_stop, at_full_stop))
+          else:
+            can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
 
               
     # Show green icon when LKA torque is applied, and

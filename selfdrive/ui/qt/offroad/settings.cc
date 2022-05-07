@@ -69,6 +69,12 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
       "When enabled, pressing the accelerator pedal will disengage openpilot.",
       "../assets/offroad/icon_disengage_on_accelerator.svg",
     },
+    {
+      "ForceVoacc",
+      "Use openpilot's Camera-based ACC (Pre-Alpha)",
+      "When enabled, OP replaces stock ACC. If stock ACC is radar-based, you must pull the radar fuse",
+      "../assets/offroad/icon_monitoring.png",
+    },
 #ifdef ENABLE_MAPS
     {
       "NavSettingTime24h",

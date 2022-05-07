@@ -119,13 +119,23 @@ class AccState:
   FAULTED = 3
   STANDSTILL = 4
 
-# TODO: update these values for Direct OBD w ASCM and without, Universal harness w and wo ascm, cam harness
+# TODO: update these values for OBD-2 harness vs camera harness.
 class CanBus:
   POWERTRAIN = 0
   OBSTACLE = 1
   CHASSIS = 2
   SW_GMLAN = 3
   LOOPBACK = 128
+
+# # TODO: Still gotta figure out where that SW_GMLAN goes...
+# class CanBusNew:
+#   POWERTRAIN = 0
+#   OBSTACLE = 1
+#   CAMERA = 2
+#   CHASSIS = 3
+#   SW_GMLAN = ?
+#   LOOPBACK = 128
+
 
 FINGERPRINTS = {
   # Astra BK MY17, ASCM unplugged
@@ -269,6 +279,10 @@ FINGERPRINTS = {
 
 EV_CAR = set([CAR.BOLT_NR, CAR.VOLT, CAR.VOLT_NR, CAR.BOLT_EUV])
 NO_ASCM = set([CAR.VOLT_NR, CAR.MALIBU_NR, CAR.ACADIA_NR, CAR.BOLT_NR, CAR.EQUINOX_NR, CAR.TAHOE_NR, CAR.SILVERADO_NR, CAR.SUBURBAN, CAR.BOLT_EUV])
+BRAKE_ON_PT_BUS = set([CAR.BOLT_NR, CAR.BOLT_EUV, CAR.SILVERADO_NR]) # This is a hack, but I'm tired...
+# Ideally we find a message from the brake controller in the fingerprint
+# We may even be able to tell if the ECM supports gas/regen based on status messages
+
 
 DBC = {
   CAR.HOLDEN_ASTRA: dbc_dict('gm_global_a_powertrain_generated', 'gm_global_a_object', chassis_dbc='gm_global_a_chassis', body_dbc='gm_global_a_lowspeed_1818125'),

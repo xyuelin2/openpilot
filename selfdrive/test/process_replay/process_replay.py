@@ -348,6 +348,7 @@ def setup_env(simulation=False):
   params.put_bool("Passive", False)
   params.put_bool("DisengageOnAccelerator", True)
   params.put_bool("EnableWideCamera", False)
+  # TODO: JJS: ForceVoacc testing
 
   os.environ["NO_RADAR_SLEEP"] = "1"
   os.environ["REPLAY"] = "1"

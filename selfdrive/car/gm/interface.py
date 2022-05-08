@@ -3,6 +3,7 @@ from cereal import car
 from math import fabs
 
 from common.conversions import Conversions as CV
+from common.params import Params
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.gm.values import CAR, CruiseButtons, \
                                      CarControllerParams, NO_ASCM
@@ -49,6 +50,11 @@ class CarInterface(CarInterfaceBase):
     ret.openpilotLongitudinalControl = True # ASCM vehicles use OP for long
     ret.radarOffCan = False # ASCM vehicles (typically) have radar
 
+    # I'm not sure it's normal to read from Params() in interface.py... but
+    # It seems the values populated in controlsd.py are set after this
+    # Meaning the option wasn't returning true _in here_
+    ret.forceVoacc = Params().get_bool("ForceVoacc")
+
     # These cars have been put into dashcam only due to both a lack of users and test coverage.
     # These cars likely still work fine. Once a user confirms each car works and a test route is
     # added to selfdrive/car/tests/routes.py, we can remove it from this list.
@@ -89,8 +95,6 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerLimitTimer = 0.4
     ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
-    
-    
     
     if ret.enableGasInterceptor:
       ret.openpilotLongitudinalControl = True
@@ -241,11 +245,6 @@ class CarInterface(CarInterfaceBase):
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
 
 
-      ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
-      ret.openpilotLongitudinalControl = True
-      ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
-
-
       # JJS: just saving previous values for posterity
       # ret.minEnableSpeed = -1. # engage speed is decided by pcm
       # ret.minSteerSpeed = -1 * CV.MPH_TO_MS
@@ -291,10 +290,12 @@ class CarInterface(CarInterfaceBase):
       ret.radarOffCan = True # No Radar
       # Note: No Long tuning as we are using stock long
     
+
     if ret.forceVoacc:
       ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
-      ret.openpilotLongitudinalControl = True
+      ret.openpilotLongitudinalControl = True # OP needs to know it's in charge...
       ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
+      ret.pcmCruise = False # I *think* when this is true, it tells OP to use stock CC in some way
 
          
     # TODO: get actual value, for now starting with reasonable value for

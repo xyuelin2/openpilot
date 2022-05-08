@@ -240,6 +240,12 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.11
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
 
+
+      ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
+      ret.openpilotLongitudinalControl = True
+      ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
+
+
       # JJS: just saving previous values for posterity
       # ret.minEnableSpeed = -1. # engage speed is decided by pcm
       # ret.minSteerSpeed = -1 * CV.MPH_TO_MS
@@ -285,6 +291,10 @@ class CarInterface(CarInterfaceBase):
       ret.radarOffCan = True # No Radar
       # Note: No Long tuning as we are using stock long
     
+    if ret.forceVoacc:
+      ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
+      ret.openpilotLongitudinalControl = True
+      ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
 
          
     # TODO: get actual value, for now starting with reasonable value for
@@ -296,10 +306,6 @@ class CarInterface(CarInterfaceBase):
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
-    if ret.forceVoacc:
-      ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
-      ret.openpilotLongitudinalControl = True
-      ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
 
 
     return ret

@@ -65,7 +65,7 @@ class CarController:
     #if (CS.CP.carFingerprint not in NO_ASCM or CS.CP.forceVoacc) and CS.CP.openpilotLongitudinalControl and not CS.CP.pcmCruise:
 
     # TODO: All three conditions should not be required - really only last two?
-    if (CS.CP.carFingerprint not in NO_ASCM or CS.CP.forceVoacc) and CS.CP.openpilotLongitudinalControl:
+    if (CS.CP.carFingerprint not in NO_ASCM or CS.CP.forceVoacc) and CS.CP.openpilotLongitudinalControl and not CS.CP.pcmCruise:
       # Gas/regen and brakes - all at 25Hz
       if (self.frame % 4) == 0:
         if not CC.longActive:

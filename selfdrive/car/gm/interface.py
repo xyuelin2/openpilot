@@ -45,10 +45,11 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
-    ret.alternativeExperience = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS
-    ret.pcmCruise = False  # stock cruise control is kept off
+    ret.alternativeExperience = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS # TODO: JJS this value should come from the toggle
+    ret.pcmCruise = False  # stock cruise control is kept off for vehicles with an ASCM
+    # For vehicle that are using the stock ACC (presently either )
     ret.openpilotLongitudinalControl = True # ASCM vehicles use OP for long
-    ret.radarOffCan = False # ASCM vehicles (typically) have radar
+    ret.radarOffCan = False # ASCM vehicles (typically) have radar TODO: This should be detected from the fingerprint, not assumed
 
     # I'm not sure it's normal to read from Params() in interface.py... but
     # It seems the values populated in controlsd.py are set after this
@@ -59,6 +60,10 @@ class CarInterface(CarInterfaceBase):
     # These cars likely still work fine. Once a user confirms each car works and a test route is
     # added to selfdrive/car/tests/routes.py, we can remove it from this list.
     ret.dashcamOnly = candidate in {CAR.CADILLAC_ATS, CAR.HOLDEN_ASTRA, CAR.MALIBU, CAR.BUICK_REGAL}
+
+    # Default to Panda forwarding ACC
+    ret.safetyConfigs[0].safetyParam = 0
+
 
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
@@ -295,7 +300,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyConfigs[0].safetyParam = 1 # Inform panda to block ACC frames from camera
       ret.openpilotLongitudinalControl = True # OP needs to know it's in charge...
       ret.radarOffCan = True # Forced VOACC will blow up (controls mismatch probably) if ACC unit not disabled
-      ret.pcmCruise = False # I *think* when this is true, it tells OP to use stock CC in some way
+      ret.pcmCruise = False # Tells OP not to depend on the car's CC.
 
          
     # TODO: get actual value, for now starting with reasonable value for

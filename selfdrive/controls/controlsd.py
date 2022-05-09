@@ -91,6 +91,8 @@ class Controls:
     params = Params()
     self.joystick_mode = params.get_bool("JoystickDebugMode") or (self.CP.notCar and sm is None)
     joystick_packet = ['testJoystick'] if self.joystick_mode else []
+    self.force_voacc = params.get_bool("ForceVoacc")
+    self.CP.forceVoacc = self.force_voacc
 
     self.sm = sm
     if self.sm is None:

@@ -22,7 +22,7 @@ class CarControllerParams:
   CAMERA_KEEPALIVE_STEP = 100
 
   # Volt gasbrake lookups
-  MAX_GAS = 3072 # Safety limit, not ACC max. Stock ACC >4096 from standstill.
+  MAX_GAS = 3800 # Safety limit, not ACC max. Stock ACC >4096 from standstill.
   ZERO_GAS = 2048 # Coasting
   MAX_BRAKE = 350 # ~ -3.5 m/s^2 with regen
 

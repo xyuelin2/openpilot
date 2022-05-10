@@ -242,13 +242,22 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2400. + STD_CARGO_KG
       ret.wheelbase = 3.745
       ret.steerRatio = 16.3
-      ret.lateralTuning.pid.kpBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
-      ret.lateralTuning.pid.kpV = [0.13, 0.23]
+      MAX_LAT_ACCEL = 2.8
+      ret.lateralTuning.init('torque')
+      ret.lateralTuning.torque.useSteeringAngle = True
+      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.friction = 0.1
       ret.centerToFront = ret.wheelbase * .49
       ret.steerRateCost = .4
       ret.steerActuatorDelay = 0.11
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
 
+      ret.longitudinalTuning.kpBP = [5., 35.]
+      ret.longitudinalTuning.kpV = [2.8, 1.5]
+      ret.longitudinalTuning.kiBP = [5., 35.]
+      ret.longitudinalTuning.kiV = [0.37, 0.30]
 
       # JJS: just saving previous values for posterity
       # ret.minEnableSpeed = -1. # engage speed is decided by pcm

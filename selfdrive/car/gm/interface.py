@@ -289,8 +289,8 @@ class CarInterface(CarInterfaceBase):
       #TODO: would be better to have a BP based on torque to pick the pid tune
       ret.steerActuatorDelayRight = 0.3
       ret.lateralTuningRight.pid.kpBP, ret.lateralTuningRight.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuningRight.pid.kpV, ret.lateralTuningRight.pid.kiV = [[0.13, 0.24], [0.01, 0.09]]
-      ret.lateralTuningRight.pid.kf = 0.00007
+      ret.lateralTuningRight.pid.kpV, ret.lateralTuningRight.pid.kiV = [[0.13, 0.22], [0.01, 0.10]]
+      ret.lateralTuningRight.pid.kf = 0.00008
 
       tire_stiffness_factor = 1.0
       

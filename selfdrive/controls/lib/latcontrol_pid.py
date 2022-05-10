@@ -62,7 +62,7 @@ class LatControlPID(LatControl):
       # +0.002 on the highway is enough to saturate
       # Right is positive, left is negative
       # Note that torque is backwards
-      curve_is_right = desired_curvature < LR_SPLIT_PT
+      curve_is_right = desired_curvature >= LR_SPLIT_PT
       pid_log.usingRightTune = curve_is_right
 
       # Check for changes in kf

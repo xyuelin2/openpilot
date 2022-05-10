@@ -104,7 +104,7 @@ class LatControlTorque(LatControl):
         self.lateralTuneSplit = self.CP.lateralTuneSplit
       
       if self.CP.lateralTuneSplit:
-        curve_is_right = desired_curvature < LR_SPLIT_PT
+        curve_is_right = desired_curvature >= LR_SPLIT_PT
         pid_log.usingRightTune = curve_is_right
 
         if curve_is_right:

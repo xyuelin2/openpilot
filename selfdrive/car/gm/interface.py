@@ -273,24 +273,24 @@ class CarInterface(CarInterfaceBase):
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
-      ret.lateralTuneDivided = True # It seems trucks need different tune for right vs left turn
+      ret.lateralTuneSplit = True # It seems trucks need different tune for right vs left turn
       # positive = clockwise = right
       # negative = ccw = left
       # left turns seems snappier and stronger
       
-      # Tune for Right turns
-      ret.steerActuatorDelay = 0.2
+      # Tune for left turns
+      ret.steerActuatorDelay = 0.3
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.22], [0.01, 0.08]]
-      ret.lateralTuning.pid.kf = 0.00007
+      ret.lateralTuning.pid.kf = 0.00006
 
-      # Tune for Left turns
+      # Tune for Right turns
       #TODO: maybe use array insteda of static vals
       #TODO: would be better to have a BP based on torque to pick the pid tune
-      ret.steerActuatorDelayNegative = 0.2
-      ret.lateralTuningNegative.pid.kpBP, ret.lateralTuningNegative.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuningNegative.pid.kpV, ret.lateralTuningNegative.pid.kiV = [[0.13, 0.24], [0.01, 0.08]]
-      ret.lateralTuningNegative.pid.kf = 0.00006
+      ret.steerActuatorDelayRight = 0.3
+      ret.lateralTuningRight.pid.kpBP, ret.lateralTuningRight.pid.kiBP = [[10., 41.0], [10., 41.0]]
+      ret.lateralTuningRight.pid.kpV, ret.lateralTuningRight.pid.kiV = [[0.13, 0.24], [0.01, 0.09]]
+      ret.lateralTuningRight.pid.kf = 0.00007
 
       tire_stiffness_factor = 1.0
       
@@ -303,13 +303,13 @@ class CarInterface(CarInterfaceBase):
       # According to JYoung, decrease MAX_LAT_ACCEL if it is understeering
       # friction may need to be increased slowly as well
       # I'm not sure what to do about centering / wandering
-      MAX_LAT_ACCEL = 2.0
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.12
+      # MAX_LAT_ACCEL = 2.0
+      # ret.lateralTuning.init('torque')
+      # ret.lateralTuning.torque.useSteeringAngle = True
+      # ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.friction = 0.12
 
     elif candidate == CAR.BOLT_EUV:
       ret.minEnableSpeed = -1

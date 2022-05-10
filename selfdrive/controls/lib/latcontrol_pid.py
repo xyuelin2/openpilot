@@ -3,8 +3,6 @@ import math
 from cereal import log
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
-from selfdrive.swaglog import cloudlog
-
 
 class LatControlPID(LatControl):
   def __init__(self, CP, CI):
@@ -14,85 +12,86 @@ class LatControlPID(LatControl):
                              k_f=CP.lateralTuning.pid.kf, pos_limit=self.steer_max, neg_limit=-self.steer_max)
     self.get_steer_feedforward = CI.get_steer_feedforward_function()
     
-    self.kf = CP.lateralTuning.pid.kf # Just storing to detect a change
-
-    self.last_angle_is_negative = False
-    self.lateralTuneDivided = CP.lateralTuneDivided # storing to detect change
+    self.last_curve_is_right = False
+    self.lateralTuneSplit = CP.lateralTuneSplit # storing to detect change
 
   def reset(self):
     super().reset()
     self.pid.reset()
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
-    
-    # k_f is immutable, and PI is too abstract for using a CP reference
-    # Because the pid controller is in-process with controlsd,
-    # and the livetuner edits the tuning lists in a mutable fashion
-    # we don't need to update anything but kf
-    if not math.isclose(self.CP.lateralTuning.pid.kf,self.kf):
-      self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf)
-      self.kf = self.CP.lateralTuning.pid.kf
-    
+        
     # TODO: JJS: Ensure that changes to CP are reflected in PI controller
     # TODO: JJS: Find a way for pid to read from something mutable directly, rather than comparing every time
 
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steeringAngleDeg = float(CS.steeringAngleDeg)
     pid_log.steeringRateDeg = float(CS.steeringRateDeg)
-    pid_log.usingNegativeTune = False
+    pid_log.usingRightTune = False
 
     angle_steers_des_no_offset = math.degrees(VM.get_steer_from_curvature(-desired_curvature, CS.vEgo, params.roll))
     angle_steers_des = angle_steers_des_no_offset + params.angleOffsetDeg
     error = angle_steers_des - CS.steeringAngleDeg
 
     # This is messy. Normally not divided and we are using pid
-    # Fingers crossed error's sign matches (normally) the likely torque sign
-    # If lateralTuneDivided changes to false when it was True
-    # We need to switch from pidNegative to pid
+    # If lateralTuneSplit changes to false when it was True
+    # We need to switch from pidRight to pid
     # I'm sure there is a better way
     # TODO: JJS: If this works, need to abstract at the latcontrol level as well as controlsd
 
-    LR_SPLIT_PT = 0.5 # Degrees to offset the zero pt for L/R split.  PID should use the negative turn close to zero
-    # TODO: Abstract the split point?
+    LR_SPLIT_PT = 0.0002 # Radians? to offset the zero pt for L/R split.  PID should use the left tune
+    # TODO: Parameterize the split point?
 
-    if (self.lateralTuneDivided != self.CP.lateralTuneDivided):
-      if not self.CP.lateralTuneDivided: # Split tune was disabled live - update to positive tune
+    if (self.lateralTuneSplit != self.CP.lateralTuneSplit):
+      if not self.CP.lateralTuneSplit: # Split tune was disabled live - update to left tune
         self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
                               k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
                               k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
                               )
-        self.kf = self.CP.lateralTuning.pid.kf
-        cloudlog.warning("PID switched to positive tune, kf: {self.kf}")
-      self.lateralTuneDivided = self.CP.lateralTuneDivided
+      self.lateralTuneSplit = self.CP.lateralTuneSplit
 
     
 
-    if self.lateralTuneDivided:
+    if self.CP.lateralTuneSplit:
       # Cannot use error; error will be negative any time the wheel moves to the left
       # We are only concerned with instances where the car needs the wheel right of center
       # To prevent nasty flip-flopping between tunes, LR_SPLIT_PT should apply a non-zero split point.
       # The sign of the split point biases the opposite sign around zero
       # TODO: JJS: look at raw values for LateralPIDState.steeringAngleDesiredDeg
       # When the wheel is close to center there will probably be an eyeball range
-      angle_is_negative = ((-angle_steers_des) < LR_SPLIT_PT)
-      pid_log.usingNegativeTune = angle_is_negative
-      if self.last_angle_is_negative != angle_is_negative: # Angle has changed sign
-        if angle_is_negative:
-          self.pid.update_params(k_f=self.CP.lateralTuningNegative.pid.kf,
-                                k_p=(self.CP.lateralTuningNegative.pid.kpBP, self.CP.lateralTuningNegative.pid.kpV),
-                                k_i=(self.CP.lateralTuningNegative.pid.kiBP, self.CP.lateralTuningNegative.pid.kiV)
+      # +0.002 on the highway is enough to saturate
+      # Right is positive, left is negative
+      # Note that torque is backwards
+      curve_is_right = desired_curvature < LR_SPLIT_PT
+      pid_log.usingRightTune = curve_is_right
+
+      # Check for changes in kf
+      if curve_is_right:
+        # k_f is immutable, and PI is too abstract for using a CP reference
+        # Because the pid controller is in-process with controlsd,
+        # and the livetuner edits the tuning lists in a mutable fashion
+        # we don't need to update anything but kf
+        if not math.isclose(self.pid.k_f, self.CP.lateralTuningRight.pid.kf):
+          self.pid.k_f = self.CP.lateralTuningRight.pid.kf
+      else:
+        if not math.isclose(self.pid.k_f, self.CP.lateralTuning.pid.kf):
+          self.pid.k_f = self.CP.lateralTuning.pid.kf
+
+
+      
+      if self.last_curve_is_right != curve_is_right: # We changed direction!
+        if curve_is_right:
+          self.pid.update_params(k_f=self.CP.lateralTuningRight.pid.kf,
+                                k_p=(self.CP.lateralTuningRight.pid.kpBP, self.CP.lateralTuningRight.pid.kpV),
+                                k_i=(self.CP.lateralTuningRight.pid.kiBP, self.CP.lateralTuningRight.pid.kiV)
                                 )
-          self.kf = self.CP.lateralTuningNegative.pid.kf
-          cloudlog.warning("PID switched to negative tune, kf: {self.kf}")
         else:
           self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf,
                                 k_p=(self.CP.lateralTuning.pid.kpBP, self.CP.lateralTuning.pid.kpV),
                                 k_i=(self.CP.lateralTuning.pid.kiBP, self.CP.lateralTuning.pid.kiV)
                                 )
-          self.kf = self.CP.lateralTuning.pid.kf
-          cloudlog.warning("PID switched to positive tune, kf: {self.kf}")
 
-        self.last_angle_is_negative = angle_is_negative
+        self.last_curve_is_right = curve_is_right
 
 
     pid_log.steeringAngleDesiredDeg = angle_steers_des

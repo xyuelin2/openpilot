@@ -81,8 +81,8 @@ class CarInterfaceBase(ABC):
     ret.steerControlType = car.CarParams.SteerControlType.torque
     ret.minSteerSpeed = 0.
     ret.wheelSpeedFactor = 1.0
-    ret.lateralTuneDivided = False # So far only GM trucks (may) need split tuning
-    ret.steerActuatorDelayNegative = 0.0 # Just throwning a default on there, again only used on GM trucks
+    ret.lateralTuneSplit = False # So far only GM trucks (may) need split tuning
+    ret.steerActuatorDelayRight = 0.0 # Just throwning a default on there, again only used on GM trucks
 
     ret.pcmCruise = True     # openpilot's state is tied to the PCM's cruise state on most cars
     ret.minEnableSpeed = -1. # enable is done by stock ACC, so ignore this

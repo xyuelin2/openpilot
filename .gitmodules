@@ -1,6 +1,7 @@
 [submodule "panda"]
 	path = panda
 	url = ../../opgm/panda.git
+	branch = dev-voacc
 [submodule "opendbc"]
 	path = opendbc
 	url = ../../opgm/opendbc.git

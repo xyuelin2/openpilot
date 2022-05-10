@@ -36,8 +36,28 @@ class LatControlTorque(LatControl):
     super().reset()
     self.pid.reset()
 
+  def detectChange(self):
+    # math.isclose compares to 9 digits
+    if not math.isclose(self.pid.k_f, self.CP.lateralTuning.torque.kf):
+      self.pid.k_f = self.CP.lateralTuning.torque.kf
+
+    if not math.isclose(self.pid._k_p[1][0], self.CP.lateralTuning.torque.kp):
+      self.pid._k_p[1][0] = self.CP.lateralTuning.torque.kp
+    
+    if not math.isclose(self.pid._k_i[1][0], self.CP.lateralTuning.torque.ki):
+      self.pid._k_i[1][0] = self.CP.lateralTuning.torque.ki
+    
+    if (self.use_steering_angle != self.CP.lateralTuning.torque.useSteeringAngle):
+      self.use_steering_angle = self.CP.lateralTuning.torque.useSteeringAngle
+    
+    if not math.isclose(self.friction, self.CP.lateralTuning.torque.friction):
+      self.friction = self.CP.lateralTuning.torque.friction
+
+
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()
+
+    self.detectChange()
 
     if CS.vEgo < MIN_STEER_SPEED or not active:
       output_torque = 0.0

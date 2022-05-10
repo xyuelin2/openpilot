@@ -26,6 +26,7 @@ class PIDController():
 
     self.reset()
 
+
   @property
   def k_p(self):
     return interp(self.speed, self._k_p[0], self._k_p[1])
@@ -50,11 +51,15 @@ class PIDController():
     self.control = 0
   
   # Update the active PI parameters
-  def update_params(self, k_p=None, k_i=None, k_f=None, pos_limit=None, neg_limit=None, rate=None):
+  def update_params(self, k_p=None, k_i=None, k_d=None, k_f=None, pos_limit=None, neg_limit=None, rate=None):
     if k_p is not None:
       self._k_p = k_p  # proportional gain
     if k_i is not None:
       self._k_i = k_i  # integral gain
+    if k_d is not None:
+      self._k_d = k_d  # deriv gain
+    if k_f is not None:
+      self.k_f = k_f  # feedforward gain
     if pos_limit is not None:
       self.pos_limit = pos_limit
     if neg_limit is not None:
@@ -66,6 +71,8 @@ class PIDController():
       self._k_p = [[0], [self._k_p]]
     if isinstance(self._k_i, Number):
       self._k_i = [[0], [self._k_i]]
+    if isinstance(self._k_d,  Number):
+      self._k_d = [[0], [self._k_d]]
 
   def update(self, error, error_rate=0.0, speed=0.0, override=False, feedforward=0., freeze_integrator=False):
     self.speed = speed

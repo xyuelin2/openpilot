@@ -20,13 +20,14 @@ class LatControlPID(LatControl):
     self.pid.reset()
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
-    if self.CP is not CS.CP:
-      self.CP = CS.CP # This should not happen.
     
-    # k_f is immutable, and PI is too abstract for using a CP reference  
-    if CS.CP.lateralTuning.pid.kf != self.kf:
-      self.pid.update_params(k_f=CS.CP.lateralTuning.pid.kf)
-      self.kf = CS.CP.lateralTuning.pid.kf
+    # k_f is immutable, and PI is too abstract for using a CP reference
+    # Because the pid controller is in-process with controlsd,
+    # and the livetuner edits the tuning lists in a mutable fashion
+    # we don't need to update anything but kf
+    if not math.isclose(self.CP.lateralTuning.pid.kf,self.kf):
+      self.pid.update_params(k_f=self.CP.lateralTuning.pid.kf)
+      self.kf = self.CP.lateralTuning.pid.kf
     
     # TODO: JJS: Ensure that changes to CP are reflected in PI controller
     # TODO: JJS: Find a way for pid to read from something mutable directly, rather than comparing every time

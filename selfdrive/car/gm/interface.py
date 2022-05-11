@@ -242,7 +242,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 2400. + STD_CARGO_KG
       ret.wheelbase = 3.745
       ret.steerRatio = 16.3
-      MAX_LAT_ACCEL = 2.8
+      MAX_LAT_ACCEL = 2.9
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL

@@ -257,7 +257,7 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpBP = [5., 20., 35.]
       ret.longitudinalTuning.kpV = [2.4, 1.5, 1.5]
       ret.longitudinalTuning.kiBP = [5., 20., 35.]
-      ret.longitudinalTuning.kiV = [0.32, 0.34, 0.28]
+      ret.longitudinalTuning.kiV = [0.32, 0.30, 0.28]
 
       # JJS: just saving previous values for posterity
       # ret.minEnableSpeed = -1. # engage speed is decided by pcm

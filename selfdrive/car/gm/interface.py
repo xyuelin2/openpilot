@@ -254,10 +254,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.11
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
 
-      ret.longitudinalTuning.kpBP = [5., 35.]
-      ret.longitudinalTuning.kpV = [2.7, 1.5]
-      ret.longitudinalTuning.kiBP = [5., 35.]
-      ret.longitudinalTuning.kiV = [0.36, 0.30]
+      ret.longitudinalTuning.kpBP = [5., 20., 35.]
+      ret.longitudinalTuning.kpV = [2.7, 1.5, 1.5]
+      ret.longitudinalTuning.kiBP = [5., 20., 35.]
+      ret.longitudinalTuning.kiV = [0.36, 0.3, 0.28]
 
       # JJS: just saving previous values for posterity
       # ret.minEnableSpeed = -1. # engage speed is decided by pcm

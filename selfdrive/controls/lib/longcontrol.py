@@ -69,9 +69,9 @@ class LongControl:
   def update(self, active, CS, long_plan, accel_limits, t_since_plan):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     # k_f is immutable, and PI is too abstract for using a CP reference
-    if CS.CP.longitudinalTuning.kf != self.kf:
-      self.pid.update_params(k_f=CS.CP.longitudinalTuning.kf)
-      self.kf = CS.CP.longitudinalTuning.kf
+    if self.CP.longitudinalTuning.kf != self.kf:
+      self.pid.update_params(k_f=self.CP.longitudinalTuning.kf)
+      self.kf = self.CP.longitudinalTuning.kf
 
 
     # Interp control trajectory

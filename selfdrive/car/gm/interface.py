@@ -269,13 +269,14 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 3.302 # From spec
       ret.steerRatio = 20.083 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
       ret.centerToFront = ret.wheelbase * 0.49
-      ret.steerActuatorDelay = 0.038 # This is very close - I got 0.074
+      
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
       
+      ret.steerActuatorDelay = 0.2 # Per Jason Young - I got 0.074
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.08]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.06]]
       ret.lateralTuning.pid.kf = 0.000060
       tire_stiffness_factor = 1.0
       
@@ -288,13 +289,13 @@ class CarInterface(CarInterfaceBase):
       # According to JYoung, decrease MAX_LAT_ACCEL if it is understeering
       # friction may need to be increased slowly as well
       # I'm not sure what to do about centering / wandering
-      MAX_LAT_ACCEL = 2.0
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.12
+      # MAX_LAT_ACCEL = 2.0
+      # ret.lateralTuning.init('torque')
+      # ret.lateralTuning.torque.useSteeringAngle = True
+      # ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
+      # ret.lateralTuning.torque.friction = 0.12
 
     elif candidate == CAR.BOLT_EUV:
       ret.minEnableSpeed = -1

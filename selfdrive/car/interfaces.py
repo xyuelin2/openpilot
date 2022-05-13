@@ -42,7 +42,11 @@ class CarInterfaceBase(ABC):
       self.cp_cam = self.CS.get_cam_can_parser(CP)
       self.cp_adas = self.CS.get_adas_can_parser(CP)
       self.cp_body = self.CS.get_body_can_parser(CP)
-      self.cp_loopback = self.CS.get_loopback_can_parser(CP)
+      #TODO: needs to get in dev-c3
+      if CP.dashcamOnly: #TODO: Upstream: loopback is going to show up as dead in dashcam mode
+        self.cp_loopback = None
+      else:
+        self.cp_loopback = self.CS.get_loopback_can_parser(CP)
       self.can_parsers = [self.cp, self.cp_cam, self.cp_adas, self.cp_body, self.cp_loopback]
 
     self.CC = None

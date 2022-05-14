@@ -31,11 +31,23 @@ class CarInterface(CarInterfaceBase):
     sigmoid = desired_angle / (1 + fabs(desired_angle))
     return 0.04689655 * sigmoid * (v_ego + 10.028217)
 
+  @staticmethod
+  def get_steer_feedforward_bolt_euv(desired_angle, v_ego):
+    ANGLE = 0.24334809
+    SIGMOID_SPEED = 0.06776136
+    SIGMOID = -0.04681753
+    SPEED = -0.00371535
+    x = ANGLE * desired_angle
+    sigmoid = x / (1 + fabs(x))
+    return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
+
   def get_steer_feedforward_function(self):
     if self.CP.carFingerprint == CAR.VOLT:
       return self.get_steer_feedforward_volt
     elif self.CP.carFingerprint == CAR.ACADIA:
       return self.get_steer_feedforward_acadia
+    elif self.CP.carFingerprint == CAR.BOLT_EUV:
+      return self.get_steer_feedforward_bolt_euv
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 
@@ -326,7 +338,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
       ret.lateralTuning.pid.kdBP = [0.]
       ret.lateralTuning.pid.kdV = [0.3]
-      ret.lateralTuning.pid.kf = 0.0002
+      ret.lateralTuning.pid.kf = 1. # use with get_feedforward_bolt_euv
       # ret.steerMaxBP = [10., 25.]
       # ret.steerMaxV = [1., 1.2]
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch

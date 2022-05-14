@@ -276,8 +276,8 @@ class CarInterface(CarInterfaceBase):
       
       ret.steerActuatorDelay = 0.2 # Per Jason Young - I got 0.074
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.0, 0.0], [0.0, 0.0]]
-      ret.lateralTuning.pid.kf = 0.0
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19, [0.02, 0.10]]
+      ret.lateralTuning.pid.kf = 0.00019
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.06]]
       # ret.lateralTuning.pid.kf = 0.000060

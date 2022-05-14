@@ -109,21 +109,21 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = 0.45 * ret.wheelbase # from Volt Gen 1
 
       ret.lateralTuning.pid.kpBP = [0., 40.]
-      ret.lateralTuning.pid.kpV = [0.0, .16]
+      ret.lateralTuning.pid.kpV = [0., .16]
       ret.lateralTuning.pid.kiBP = [0.]
-      ret.lateralTuning.pid.kiV = [0.025]
+      ret.lateralTuning.pid.kiV = [.023]
       ret.lateralTuning.pid.kdBP = [0.]
       ret.lateralTuning.pid.kdV = [.6]
       ret.lateralTuning.pid.kf = 1. # !!! ONLY for sigmoid feedforward !!!
-      ret.steerActuatorDelay = 0.18
+      
 
       # Only tuned to reduce oscillations. TODO.
       ret.longitudinalTuning.kpBP = [5., 15., 35.]
       ret.longitudinalTuning.kpV = [1.25, 1.6, 1.3]
       ret.longitudinalTuning.kiBP = [5., 15., 35.]
-      ret.longitudinalTuning.kiV = [0.2, 0.31, 0.34]
+      ret.longitudinalTuning.kiV = [0.18, 0.31, 0.34]
       ret.longitudinalTuning.kdBP = [5., 25.]
-      ret.longitudinalTuning.kdV = [0.5, 0.0]
+      ret.longitudinalTuning.kdV = [0.6, 0.0]
 
     elif candidate == CAR.MALIBU or candidate == CAR.MALIBU_NR:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)

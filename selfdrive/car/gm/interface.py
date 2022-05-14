@@ -267,17 +267,18 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = -1 * CV.MPH_TO_MS
       ret.mass = 2731. + STD_CARGO_KG # From spec
       ret.wheelbase = 3.302 # From spec
-      ret.steerRatio = 20.083 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
+      ret.steerRatio = 23.2 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
       ret.centerToFront = ret.wheelbase * 0.49
       
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
       
-      ret.steerActuatorDelay = 0.2 # Per Jason Young - I got 0.074
+      ret.steerActuatorDelay = 0.253 # Per Jason Young - I got 0.074
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19], [0.02, 0.10]]
-      ret.lateralTuning.pid.kf = 0.00019
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19], [0.02, 0.12]]
+      ret.lateralTuning.pid.kf = 0.000195
+      ret.steerLimitTimer = 0.5
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.06]]
       # ret.lateralTuning.pid.kf = 0.000060

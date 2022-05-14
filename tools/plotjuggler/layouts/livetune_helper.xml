@@ -1,0 +1,201 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget parent="main_window" name="Main Window">
+  <Tab tab_name="General" containers="1">
+   <Container>
+    <DockSplitter count="6" sizes="0.166276;0.167447;0.166276;0.166276;0.167447;0.166276" orientation="-">
+     <DockArea name="Red: LKAS Torque, Blue: Driver neg right">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.933330" right="6792.933301" top="0.369750" bottom="-2.559750"/>
+       <limitY/>
+       <curve color="#1f77b4" name="/carState/steeringTorque"/>
+       <curve color="#d62728" name="/carState/steeringTorqueEps"/>
+       <curve color="#afafaf" name="/deviceState/chargingDisabled"/>
+      </plot>
+     </DockArea>
+     <DockArea name="LKAS Torque Reg">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.943731" right="6792.940772" top="6.275000" bottom="-257.275000"/>
+       <limitY/>
+       <curve color="#17becf" name="/can/128/ASCMLKASteeringCmd/LKASteeringCmd"/>
+       <curve color="#bcbd22" name="/controlsState/longControlState"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Speed MPH">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.860553" right="6792.851068" top="76.640750" bottom="76.189250"/>
+       <limitY/>
+       <curve color="#1ac938" name="/can/0/ECMVehicleSpeed/VehicleSpeed"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Roll">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.924349" right="6792.923358" top="0.010710" bottom="0.006324"/>
+       <limitY/>
+       <curve color="#1f77b4" name="/liveParameters/roll"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Steer rate deg">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.933330" right="6792.933301" top="3.125000" bottom="-2.125000"/>
+       <limitY/>
+       <curve color="#f14cc1" name="/carState/steeringRateDeg"/>
+       <curve color="#595959" name="/deviceState/chargingError"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Purple: Steer Limited, Blue: OP Engaged">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6787.933330" right="6792.933508" top="1.025000" bottom="-0.025000"/>
+       <limitY/>
+       <curve color="#9467bd" name="/carState/steeringRateLimited"/>
+       <curve color="#17becf" name="/carControl/enabled"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Curvatures" containers="1">
+   <Container>
+    <DockSplitter count="3" sizes="0.332948;0.334104;0.332948" orientation="-">
+     <DockArea name="Curvatures">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="0.000109" bottom="-0.000139"/>
+       <limitY/>
+       <curve color="#d62728" name="/lateralPlan/curvatures/0"/>
+       <curve color="#1ac938" name="/lateralPlan/curvatures/1"/>
+       <curve color="#ff7f0e" name="/lateralPlan/curvatures/2"/>
+       <curve color="#1f77b4" name="/carState/accFaulted"/>
+      </plot>
+     </DockArea>
+     <DockArea name="PSIs">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="0.000130" bottom="-0.000164"/>
+       <limitY/>
+       <curve color="#f14cc1" name="/lateralPlan/psis/0"/>
+       <curve color="#9467bd" name="/lateralPlan/psis/1"/>
+       <curve color="#17becf" name="/lateralPlan/psis/2"/>
+      </plot>
+     </DockArea>
+     <DockArea name="...">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="0.100000" bottom="-0.100000"/>
+       <limitY/>
+       <curve color="#d62728" name="/controlsState/desiredCurvature"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="LiveParams" containers="1">
+   <Container>
+    <DockSplitter count="3" sizes="0.332948;0.334104;0.332948" orientation="-">
+     <DockArea name="Angle Offset">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="0.798005" bottom="-0.019464"/>
+       <limitY/>
+       <curve color="#d62728" name="/liveParameters/angleOffsetDeg"/>
+       <curve color="#1ac938" name="/liveParameters/angleOffsetAverageDeg"/>
+       <curve color="#ff7f0e" name="/liveParameters/posenetSpeed"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Roll">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="0.042316" bottom="-0.001032"/>
+       <limitY/>
+       <curve color="#1f77b4" name="/liveParameters/roll"/>
+       <curve color="#ff7f0e" name="/liveParameters/posenetSpeed"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Steer Ratio">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="24.041651" bottom="-0.586382"/>
+       <limitY/>
+       <curve color="#f14cc1" name="/liveParameters/steerRatio"/>
+       <curve color="#ff7f0e" name="/liveParameters/posenetSpeed"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="Lag" containers="1">
+   <Container>
+    <DockSplitter count="1" sizes="1" orientation="-">
+     <DockArea name="Purple: LKAS Command, Blue: Torque applied">
+      <plot style="LinesAndDots" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="6204.873819" right="6209.812693" top="-45.225000" bottom="-203.775000"/>
+       <limitY/>
+       <curve color="#06d005" name="/sendcan/0/ASCMLKASteeringCmd/LKASteeringCmd"/>
+       <curve color="#cf2c17" name="PSCM Torque Scaled"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab tab_name="tUNE" containers="1">
+   <Container>
+    <DockSplitter count="5" sizes="0.200466;0.199301;0.200466;0.199301;0.200466" orientation="-">
+     <DockArea name="Red: f Yellow: p, Blue: i, green: output  - neg right">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="7182.783387" right="7187.783447" top="0.214411" bottom="-0.648787"/>
+       <limitY/>
+       <curve color="#bcbd22" name="/controlsState/lateralControlState/pidState/p"/>
+       <curve color="#1f77b4" name="/controlsState/lateralControlState/pidState/i"/>
+       <curve color="#d62728" name="/controlsState/lateralControlState/pidState/f"/>
+       <curve color="#565656" name="/carState/accFaulted"/>
+      </plot>
+     </DockArea>
+     <DockArea name="LKAS Command">
+      <plot style="LinesAndDots" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="7182.780986" right="7187.783447" top="7.500000" bottom="-307.500000"/>
+       <limitY/>
+       <curve color="#17becf" name="/can/128/ASCMLKASteeringCmd/LKASteeringCmd"/>
+       <curve color="#1f77b4" name="/carState/accFaulted"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Controller Output">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="7182.783387" right="7187.783171" top="-0.178413" bottom="-1.020039"/>
+       <limitY/>
+       <curve color="#1ac938" name="/controlsState/lateralControlState/pidState/output"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Orange: Steer Des, Pink Des Deg">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="7182.783387" right="7187.783171" top="2.005410" bottom="-0.792661"/>
+       <limitY/>
+       <curve color="#ff7f0e" name="/controlsState/lateralControlState/pidState/steeringAngleDeg"/>
+       <curve color="#f14cc1" name="/controlsState/lateralControlState/pidState/steeringAngleDesiredDeg"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Lateral Error angle">
+      <plot style="Lines" flip_x="false" mode="TimeSeries" flip_y="false">
+       <range left="7182.783387" right="7187.783171" top="1.210690" bottom="-1.443904"/>
+       <limitY/>
+       <curve color="#9467bd" name="/controlsState/lateralControlState/pidState/angleError"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="4"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="0"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad Rlog"/>
+  <plugin ID="Cereal Subscriber"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations>
+  <snippet name="PSCM Torque Scaled">
+   <global></global>
+   <function>return value * 100</function>
+   <linked_source>/can/0/PSCMStatus/LKATorqueDelivered</linked_source>
+  </snippet>
+ </customMathEquations>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

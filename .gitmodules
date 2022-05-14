@@ -10,6 +10,7 @@
 [submodule "cereal"]
 	path = cereal
 	url = ../../opgm/cereal.git
+	branch = dev-c3-ff-kd
 [submodule "rednose_repo"]
 	path = rednose_repo
 	url = ../../commaai/rednose.git

@@ -217,7 +217,7 @@ class CarInterface(CarInterfaceBase):
       
       # TODO: Needs refinement for stop and go, doesn't fully stop
       # Assumes the Bolt is using L-Mode for regen braking
-      ret.longitudinalTuning.kpBP = [0., 35]
+      ret.longitudinalTuning.kpBP = [0., 35.]
       ret.longitudinalTuning.kpV = [0.21, 0.46] 
       ret.longitudinalTuning.kiBP = [0., 35.] 
       ret.longitudinalTuning.kiV = [0.22, 0.33]
@@ -334,13 +334,11 @@ class CarInterface(CarInterfaceBase):
       # still working on improving lateral
       ret.steerRateCost = 0.5
       ret.steerActuatorDelay = 0.
-      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.1, 0.26], [0.021]]
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 40.0], [0., 40.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.1, 0.22], [0.01, 0.021]]
       ret.lateralTuning.pid.kdBP = [0.]
       ret.lateralTuning.pid.kdV = [0.6]
       ret.lateralTuning.pid.kf = 1. # use with get_feedforward_bolt_euv
-      # ret.steerMaxBP = [10., 25.]
-      # ret.steerMaxV = [1., 1.2]
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # Using Stock ACC
       ret.radarOffCan = True # No Radar

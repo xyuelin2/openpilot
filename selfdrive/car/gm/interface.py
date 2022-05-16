@@ -17,7 +17,13 @@ class CarInterface(CarInterfaceBase):
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     params = CarControllerParams()
     return params.ACCEL_MIN, params.ACCEL_MAX
-
+  
+  @staticmethod
+  def get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED):
+    x = ANGLE * (angle + ANGLE_OFFSET)
+    sigmoid = x / (1 + np.fabs(x))
+    return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
+  
   # Determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
   def get_steer_feedforward_volt(desired_angle, v_ego):
@@ -33,13 +39,12 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def get_steer_feedforward_bolt_euv(desired_angle, v_ego):
-    ANGLE = 0.24334809
-    SIGMOID_SPEED = 0.06776136
-    SIGMOID = -0.04681753
-    SPEED = -0.00371535
-    x = ANGLE * desired_angle
-    sigmoid = x / (1 + fabs(x))
-    return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
+    ANGLE = 0.11857383
+    ANGLE_OFFSET = -0.66618072
+    SIGMOID_SPEED = 0.08335431
+    SIGMOID = 0.03195815
+    SPEED = -0.00138867
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
     if self.CP.carFingerprint == CAR.VOLT:

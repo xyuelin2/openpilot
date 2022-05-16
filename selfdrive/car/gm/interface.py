@@ -301,9 +301,9 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = .4
       ret.steerActuatorDelay = 0.11
       ret.lateralTuning.pid.kpBP = [0., 40.]
-      ret.lateralTuning.pid.kpV = [0.04, 0.16]
+      ret.lateralTuning.pid.kpV = [0.0, 0.12]
       ret.lateralTuning.pid.kiBP = [0., 40.]
-      ret.lateralTuning.pid.kiV = [0.005, 0.015]
+      ret.lateralTuning.pid.kiV = [0.005, 0.01]
       ret.lateralTuning.pid.kdBP = [0.]
       ret.lateralTuning.pid.kdV = [0.8]
       ret.lateralTuning.pid.kf = 1. # use with get_steer_feedforward_silverado()

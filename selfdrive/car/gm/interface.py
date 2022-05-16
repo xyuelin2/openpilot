@@ -14,7 +14,7 @@ GearShifter = car.CarState.GearShifter
 
 def get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED):
   x = ANGLE * (desired_angle + ANGLE_OFFSET)
-  sigmoid = x / (1 + np.fabs(x))
+  sigmoid = x / (1 + fabs(x))
   return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
   
 class CarInterface(CarInterfaceBase):

@@ -71,9 +71,9 @@ class CarInterface(CarInterfaceBase):
     elif self.CP.carFingerprint == CAR.BOLT_EUV:
       return self.get_steer_feedforward_bolt_euv
     elif self.CP.carFingerprint == CAR.BOLT_NR:
-      return self.get_steer_feedforward_bolt_euv
+      return self.get_steer_feedforward_bolt
     elif self.CP.carFingerprint == CAR.SILVERADO_NR:
-      return self.get_steer_feedforward_bolt_euv
+      return self.get_steer_feedforward_silverado
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 

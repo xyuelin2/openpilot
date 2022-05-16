@@ -12,17 +12,16 @@ ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
 
+def get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED):
+  x = ANGLE * (angle + ANGLE_OFFSET)
+  sigmoid = x / (1 + np.fabs(x))
+  return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
+  
 class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     params = CarControllerParams()
     return params.ACCEL_MIN, params.ACCEL_MAX
-  
-  @staticmethod
-  def get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED):
-    x = ANGLE * (angle + ANGLE_OFFSET)
-    sigmoid = x / (1 + np.fabs(x))
-    return (SIGMOID_SPEED * sigmoid * v_ego) + (SIGMOID * sigmoid) + (SPEED * v_ego)
   
   # Determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod

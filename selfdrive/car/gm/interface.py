@@ -45,6 +45,15 @@ class CarInterface(CarInterfaceBase):
     SIGMOID = 0.03195815
     SPEED = -0.00138867
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+  
+  @staticmethod
+  def get_steer_feedforward_bolt(desired_angle, v_ego):
+    ANGLE = 0.12947602500362315
+    ANGLE_OFFSET = -0.19980963565372906
+    SIGMOID_SPEED = 0.08451511221032966
+    SIGMOID = 0.06338113759771143
+    SPEED = 0.0011637835935231278
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
     if self.CP.carFingerprint == CAR.VOLT:
@@ -52,6 +61,8 @@ class CarInterface(CarInterfaceBase):
     elif self.CP.carFingerprint == CAR.ACADIA:
       return self.get_steer_feedforward_acadia
     elif self.CP.carFingerprint == CAR.BOLT_EUV:
+      return self.get_steer_feedforward_bolt_euv
+    elif self.CP.carFingerprint == CAR.BOLT_NR:
       return self.get_steer_feedforward_bolt_euv
     else:
       return CarInterfaceBase.get_steer_feedforward_default
@@ -215,10 +226,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerRateCost = 0.5
       ret.steerActuatorDelay = 0.
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.14, 0.24], [0.01, 0.021]]
       ret.lateralTuning.pid.kdBP = [0.]
-      ret.lateralTuning.pid.kdV = [0.3]
-      ret.lateralTuning.pid.kf = 0.0002
+      ret.lateralTuning.pid.kdV = [0.5]
+      ret.lateralTuning.pid.kf = 1. # for get_steer_feedforward_bolt()
       
       # TODO: Needs refinement for stop and go, doesn't fully stop
       # Assumes the Bolt is using L-Mode for regen braking

@@ -54,15 +54,26 @@ class CarInterface(CarInterfaceBase):
     SIGMOID = 0.06338113759771143
     SPEED = 0.0011637835935231278
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+  
+  @staticmethod
+  def get_steer_feedforward_silverado(desired_angle, v_ego):
+    ANGLE = 0.11934781484656849
+    ANGLE_OFFSET = -1.5086383252235784
+    SIGMOID_SPEED = 0.07460493756635529
+    SIGMOID = 0.14282966418406304
+    SPEED = 0.0011406020503111189
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
-    if self.CP.carFingerprint == CAR.VOLT:
+    if self.CP.carFingerprint == CAR.VOLT or self.CP.carFingerprint == CAR.VOLT_NR:
       return self.get_steer_feedforward_volt
     elif self.CP.carFingerprint == CAR.ACADIA:
       return self.get_steer_feedforward_acadia
     elif self.CP.carFingerprint == CAR.BOLT_EUV:
       return self.get_steer_feedforward_bolt_euv
     elif self.CP.carFingerprint == CAR.BOLT_NR:
+      return self.get_steer_feedforward_bolt_euv
+    elif self.CP.carFingerprint == CAR.SILVERADO_NR:
       return self.get_steer_feedforward_bolt_euv
     else:
       return CarInterfaceBase.get_steer_feedforward_default
@@ -290,29 +301,13 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * .49
       ret.steerRateCost = .4
       ret.steerActuatorDelay = 0.11
-      # ret.lateralTuning.pid.kpBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
-      # ret.lateralTuning.pid.kpV = [0.13, 0.23]
-
-      # According to JYoung, decrease MAX_LAT_ACCEL if it is understeering
-      # friction may need to be increased slowly as well
-      # I'm not sure what to do about centering / wandering
-      MAX_LAT_ACCEL = 2.5
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.1
-
-      # JJS: just saving previous values for posterity
-      # ret.minEnableSpeed = -1. # engage speed is decided by pcm
-      # ret.minSteerSpeed = -1 * CV.MPH_TO_MS
-      # ret.mass = 2241. + STD_CARGO_KG
-      # ret.wheelbase = 3.745
-      # ret.steerRatio = 16.3 # Determined by skip # 16.3 # From a 2019 SILVERADO
-      # ret.centerToFront = ret.wheelbase * 0.49
-      # ret.steerActuatorDelay = 0.11 # Determined by skip # 0.075
-      # ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
+      ret.lateralTuning.pid.kpBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
+      ret.lateralTuning.pid.kpV = [0.13, 0.23]
+      ret.lateralTuning.pid.kiBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
+      ret.lateralTuning.pid.kiV = [0.01, 0.02]
+      ret.lateralTuning.pid.kdBP = [0.]
+      ret.lateralTuning.pid.kdV = [0.6]
+      ret.lateralTuning.pid.kf = 1. # use with get_steer_feedforward_silverado()
 
     elif candidate == CAR.SUBURBAN:
       ret.minEnableSpeed = -1. # engage speed is decided by pcmFalse

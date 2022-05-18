@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="tab1">
+   <Container>
+    <DockSplitter count="5" sizes="0.200231;0.200231;0.199074;0.200231;0.200231" orientation="-">
+     <DockArea name="Speed (m/s)">
+      <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+       <range left="2672.605169" bottom="-0.100000" top="0.100000" right="2677.605058"/>
+       <limitY/>
+       <curve name="/controlsState/vPid" color="#1f77b4"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Accelerometer">
+      <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+       <range left="2672.589239" bottom="-0.004093" top="0.003825" right="2677.587514"/>
+       <limitY/>
+       <curve name="/liveLocationKalman/accelerationDevice/value/0" color="#ff7f0e"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Accel Cmds. Pink: f, Purple: i, Blue: p">
+      <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+       <range left="2672.605169" bottom="-0.100000" top="0.100000" right="2677.605058"/>
+       <limitY/>
+       <curve name="/controlsState/ufAccelCmd" color="#f14cc1"/>
+       <curve name="/controlsState/uiAccelCmd" color="#9467bd"/>
+       <curve name="/controlsState/upAccelCmd" color="#17becf"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Green: Pedal Output, Red: VehicleGas">
+      <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+       <range left="2672.591817" bottom="-0.169915" top="1.680283" right="2677.601584"/>
+       <limitY/>
+       <curve name="/can/0/AcceleratorPedal2/AcceleratorPedal2" color="#d62728"/>
+       <curve name="/can/0/GAS_SENSOR/INTERCEPTOR_GAS" color="#1ac938"/>
+      </plot>
+     </DockArea>
+     <DockArea name="GAS_COMMAND">
+      <plot flip_x="false" style="Lines" flip_y="false" mode="TimeSeries">
+       <range left="2672.591817" bottom="-78.387270" top="-78.187270" right="2677.591766"/>
+       <limitY/>
+       <curve name="/can/128/GAS_COMMAND/GAS_COMMAND" color="#ff7f0e"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="0"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad Rlog"/>
+  <plugin ID="Cereal Subscriber"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

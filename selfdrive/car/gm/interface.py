@@ -56,11 +56,11 @@ class CarInterface(CarInterfaceBase):
   
   @staticmethod
   def get_steer_feedforward_silverado(desired_angle, v_ego):
-    ANGLE = 0.11934781484656849
-    ANGLE_OFFSET = -1.5086383252235784
-    SIGMOID_SPEED = 0.07460493756635529
-    SIGMOID = 0.14282966418406304
-    SPEED = 0.0011406020503111189
+    ANGLE = 0.06539361463056717
+    ANGLE_OFFSET = -0.8390269362439537
+    SIGMOID_SPEED = 0.023681877712247515
+    SIGMOID = 0.5709779025308087
+    SPEED = -0.0016656455765509301
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
@@ -300,12 +300,12 @@ class CarInterface(CarInterfaceBase):
       ret.centerToFront = ret.wheelbase * .49
       ret.steerRateCost = .4
       ret.steerActuatorDelay = 0.11
-      ret.lateralTuning.pid.kpBP = [0., 40.]
-      ret.lateralTuning.pid.kpV = [0.0, 0.12]
-      ret.lateralTuning.pid.kiBP = [0., 40.]
-      ret.lateralTuning.pid.kiV = [0.005, 0.01]
+      ret.lateralTuning.pid.kpBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
+      ret.lateralTuning.pid.kpV = [0.13, 0.23]
+      ret.lateralTuning.pid.kiBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
+      ret.lateralTuning.pid.kiV = [0.01, 0.02]
       ret.lateralTuning.pid.kdBP = [0.]
-      ret.lateralTuning.pid.kdV = [0.8]
+      ret.lateralTuning.pid.kdV = [0.6]
       ret.lateralTuning.pid.kf = 1. # use with get_steer_feedforward_silverado()
 
     elif candidate == CAR.SUBURBAN:

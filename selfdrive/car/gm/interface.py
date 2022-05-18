@@ -26,9 +26,12 @@ class CarInterface(CarInterfaceBase):
   # Determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
   def get_steer_feedforward_volt(desired_angle, v_ego):
-    desired_angle *= 0.02904609
-    sigmoid = desired_angle / (1 + fabs(desired_angle))
-    return 0.10006696 * sigmoid * (v_ego + 3.12485927)
+    ANGLE = 0.03093722278106523
+    ANGLE_OFFSET = 0.46341000035928637
+    SIGMOID_SPEED = 0.07928458395144745
+    SIGMOID = 0.4983180128530419
+    SPEED = -0.0024896011696167266
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   @staticmethod
   def get_steer_feedforward_acadia(desired_angle, v_ego):

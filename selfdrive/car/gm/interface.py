@@ -47,11 +47,11 @@ class CarInterface(CarInterfaceBase):
   
   @staticmethod
   def get_steer_feedforward_bolt(desired_angle, v_ego):
-    ANGLE = 0.12947602500362315
-    ANGLE_OFFSET = -0.19980963565372906
-    SIGMOID_SPEED = 0.08451511221032966
-    SIGMOID = 0.06338113759771143
-    SPEED = 0.0011637835935231278
+    ANGLE = 0.06370624896135679
+    ANGLE_OFFSET = 0.32536345911579184
+    SIGMOID_SPEED = 0.06479105208670367
+    SIGMOID = 0.34485246691603205
+    SPEED = -0.0010645479469461995
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
   
   @staticmethod

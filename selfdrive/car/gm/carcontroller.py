@@ -142,7 +142,7 @@ class CarController:
         
         if CS.CP.enableGasInterceptor:
           # TODO: JJS Unsure if low is single pedal mode in any non-electric cars
-          singlePedalMode = CS.out.gearShifter == GearShifter.low and CS.CP.carFingerprint in EV_CAR
+          singlePedalMode = CS.gearShifter == GearShifter.low and CS.CP.carFingerprint in EV_CAR
           # TODO: JJS Detect saturated battery and fallback to D mode (until regen is available
           if singlePedalMode:
             # In L Mode, Pedal applies regen at a fixed coast-point (TODO: max regen in L mode may be different per car)
@@ -164,7 +164,8 @@ class CarController:
               # Scales the accel from 0-1 to 0.156-1
               pedal_gas = clip(((1-zero) * actuators.accel + zero), 0., 1.)
             else:
-              pedal_gas = clip(-actuators.accel, 0., zero) # Make brake the same size as gas, but clip to regen
+              # if accel is negative, -0.1 -> 0.015625
+              pedal_gas = clip(zero + actuators.accel, 0., zero) # Make brake the same size as gas, but clip to regen
               # aeb = actuators.brake*(1-zero)-regen # For use later, braking more than regen
           else:
             # In D Mode, Pedal is close to coast at 0, 100% at 1.
@@ -175,8 +176,8 @@ class CarController:
           # #TODO: Add alert when not in L mode
           # This is brought back from Felger's fork
           # apply pedal hysteresis and clip the final output to valid values.
-          pedal_gas, self.pedal_steady = actuator_hystereses(pedal_gas, self.pedal_steady)
-          pedal_gas = clip(pedal_gas, 0., 1.)
+          pedal_final, self.pedal_steady = actuator_hystereses(pedal_gas, self.pedal_steady)
+          pedal_gas = clip(pedal_final, 0., 1.)
 
           # pedal_gas = clip(actuators.accel, 0., 1.)
           can_sends.append(create_gas_interceptor_command(self.packer_pt, pedal_gas, idx))

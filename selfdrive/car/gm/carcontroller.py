@@ -3,9 +3,10 @@ from common.conversions import Conversions as CV
 from common.realtime import DT_CTRL
 from common.numpy_fast import interp, clip
 from opendbc.can.packer import CANPacker
-from selfdrive.car import apply_std_steer_torque_limits, create_gas_interceptor_command
+from selfdrive.car import apply_std_steer_torque_limits, create_gas_interceptor_command2
 from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams, EV_CAR
+import math
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 GearShifter = car.CarState.GearShifter
@@ -16,7 +17,7 @@ def actuator_hystereses(final_pedal, pedal_steady):
   pedal_hyst_gap = 0.01    # don't change pedal command for small oscillations within this value
 
   # for small pedal oscillations within pedal_hyst_gap, don't change the pedal command
-  if final_pedal == 0.:
+  if math.isclose(final_pedal,0.0):
     pedal_steady = 0.
   elif final_pedal > pedal_steady + pedal_hyst_gap:
     pedal_steady = final_pedal - pedal_hyst_gap
@@ -178,9 +179,10 @@ class CarController:
           # apply pedal hysteresis and clip the final output to valid values.
           pedal_final, self.pedal_steady = actuator_hystereses(pedal_gas, self.pedal_steady)
           pedal_gas = clip(pedal_final, 0., 1.)
-
+          if not CC.longActive:
+            pedal_gas = 0.0 # May not be needed with the enable param
           # pedal_gas = clip(actuators.accel, 0., 1.)
-          can_sends.append(create_gas_interceptor_command(self.packer_pt, pedal_gas, idx))
+          can_sends.append(create_gas_interceptor_command2(self.packer_pt, CC.longActive, pedal_gas, idx))
         else:
           can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, CC.enabled, at_full_stop))
 

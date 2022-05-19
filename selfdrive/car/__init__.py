@@ -112,9 +112,6 @@ def create_gas_interceptor_command(packer, gas_amount, idx):
   if enable:
     values["GAS_COMMAND"] = gas_amount * 255.
     values["GAS_COMMAND2"] = gas_amount * 255.
-  else:
-    values["GAS_COMMAND"] = 0.
-    values["GAS_COMMAND2"] = 0.
 
   dat = packer.make_can_msg("GAS_COMMAND", 0, values)[2]
 

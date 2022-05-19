@@ -312,7 +312,8 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kiV = [0.02, 0.025]
       ret.lateralTuning.pid.kdBP = [0.]
       ret.lateralTuning.pid.kdV = [0.6]
-      ret.lateralTuning.pid.kf = 1. # use with get_steer_feedforward_silverado()
+      ret.lateralTuning.pid.kf = 0.8 # when turning right. use with get_steer_feedforward_silverado()
+      ret.lateralTuning.pid.kfLeft = 1. #  when turning left. use with get_steer_feedforward_silverado()
 
     elif candidate == CAR.SUBURBAN:
       ret.minEnableSpeed = -1. # engage speed is decided by pcmFalse

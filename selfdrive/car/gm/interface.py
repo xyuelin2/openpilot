@@ -110,6 +110,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kiV = [0.]
       ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_volt()
       ret.steerActuatorDelay = 0.2
+      
 
     elif candidate == CAR.MALIBU or candidate == CAR.MALIBU_NR:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
@@ -188,13 +189,14 @@ class CarInterface(CarInterfaceBase):
       # TODO: Needs refinement for stop and go, doesn't fully stop
       # Assumes the Bolt is using L-Mode for regen braking
       ret.longitudinalTuning.kpBP = [0., 35.0]
-      ret.longitudinalTuning.kpV = [0.21, 0.46] 
+      ret.longitudinalTuning.kpV = [0.4, 0.06] 
       ret.longitudinalTuning.kiBP = [0., 35.0] 
-      ret.longitudinalTuning.kiV = [0.22, 0.33]
-      ret.stoppingDecelRate = 0.17  # reach stopping target smoothly, brake_travel/s while trying to stop
+      ret.longitudinalTuning.kiV = [0.0, 0.04]
+      ret.longitudinalTuning.kf = 0.25
+      ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
       ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
-      ret.vEgoStopping = 0.6  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
-      ret.vEgoStarting = 0.6  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+      ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+      ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
       # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
       ret.stoppingControl = True
       # ret.longitudinalTuning.deadzoneBP = [0.]

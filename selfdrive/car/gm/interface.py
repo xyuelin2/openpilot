@@ -68,6 +68,15 @@ class CarInterface(CarInterfaceBase):
     SIGMOID = 0.5709779025308087
     SPEED = -0.0016656455765509301
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+  
+  @staticmethod
+  def get_steer_feedforward_suburban(desired_angle, v_ego):
+    ANGLE = 0.06562376600261893
+    ANGLE_OFFSET = -2.656819831714162
+    SIGMOID_SPEED = 0.04648878299738527
+    SIGMOID = 0.21826990273744493
+    SPEED = -0.001355528078762762
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
     if self.CP.carFingerprint == CAR.VOLT or self.CP.carFingerprint == CAR.VOLT_NR:
@@ -80,6 +89,8 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_bolt
     elif self.CP.carFingerprint == CAR.SILVERADO_NR:
       return self.get_steer_feedforward_silverado
+    elif self.CP.carFingerprint == CAR.SUBURBAN:
+      return self.get_steer_feedforward_suburban
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 
@@ -320,23 +331,28 @@ class CarInterface(CarInterfaceBase):
       ret.minSteerSpeed = -1 * CV.MPH_TO_MS
       ret.mass = 2731. + STD_CARGO_KG
       ret.wheelbase = 3.302
-      ret.steerRatio = 17.3 # COPIED FROM SILVERADO
+      ret.steerRatio = 23.2 # LiveParams 17.3 From 2016 spec (unlisted for newer models) TODO: Use LiveParameters to find calculated
       ret.centerToFront = ret.wheelbase * 0.49
-      ret.steerActuatorDelay = 0.075
+      
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False # ASCM vehicles use OP for long
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
-
-      # According to JYoung, decrease MAX_LAT_ACCEL if it is understeering
-      # friction may need to be increased slowly as well
-      # I'm not sure what to do about centering / wandering
-      MAX_LAT_ACCEL = 2.0
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.12
+      
+      ret.steerActuatorDelay = 0.253 # Per Jason Young - I got 0.074
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19], [0.02, 0.12]]
+      ret.lateralTuning.pid.kpBP = [10., 41.]
+      ret.lateralTuning.pid.kpV = [0.11, 0.19]
+      ret.lateralTuning.pid.kiBP = [10., 41.]
+      ret.lateralTuning.pid.kiV = [0.02, 0.12]
+      ret.lateralTuning.pid.kdBP = [0.]
+      ret.lateralTuning.pid.kdV = [0.6]
+      ret.lateralTuning.pid.kf = 1.0
+      ret.steerLimitTimer = 0.5
+      # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
+      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.06]]
+      # ret.lateralTuning.pid.kf = 0.000060
+      tire_stiffness_factor = 1.0
 
     elif candidate == CAR.BOLT_EUV:
       ret.minEnableSpeed = -1

@@ -26,7 +26,7 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_steer_feedforward_volt(desired_angle, v_ego):
     ANGLE = 0.03093722278106523
-    ANGLE_OFFSET = 0.46341000035928637
+    ANGLE_OFFSET = 0.#46341000035928637
     SIGMOID_SPEED = 0.07928458395144745
     SIGMOID = 0.4983180128530419
     SPEED = -0.0024896011696167266
@@ -35,7 +35,7 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_steer_feedforward_acadia(desired_angle, v_ego):
     ANGLE = 0.1314029550298617
-    ANGLE_OFFSET = 0.8317776927522815
+    ANGLE_OFFSET = 0.#8317776927522815
     SIGMOID_SPEED = 0.03820691400292691
     SIGMOID = 0.3785405719285944
     SPEED = -0.0010868615264700465
@@ -44,7 +44,7 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_steer_feedforward_bolt_euv(desired_angle, v_ego):
     ANGLE = 0.0758345580739845
-    ANGLE_OFFSET = 0.31396926577596984
+    ANGLE_OFFSET = 0.#31396926577596984
     SIGMOID_SPEED = 0.04367532050459129
     SIGMOID = 0.43144116109994846
     SPEED = -0.002654134623368279
@@ -53,7 +53,7 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_steer_feedforward_bolt(desired_angle, v_ego):
     ANGLE = 0.06370624896135679
-    ANGLE_OFFSET = 0.32536345911579184
+    ANGLE_OFFSET = 0.#32536345911579184
     SIGMOID_SPEED = 0.06479105208670367
     SIGMOID = 0.34485246691603205
     SPEED = -0.0010645479469461995
@@ -62,10 +62,19 @@ class CarInterface(CarInterfaceBase):
   @staticmethod
   def get_steer_feedforward_silverado(desired_angle, v_ego):
     ANGLE = 0.06539361463056717
-    ANGLE_OFFSET = -0.8390269362439537
+    ANGLE_OFFSET = -0.#8390269362439537
     SIGMOID_SPEED = 0.023681877712247515
     SIGMOID = 0.5709779025308087
     SPEED = -0.0016656455765509301
+    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+  
+  @staticmethod
+  def get_steer_feedforward_suburban(desired_angle, v_ego):
+    ANGLE = 0.06562376600261893
+    ANGLE_OFFSET = 0.#-2.656819831714162
+    SIGMOID_SPEED = 0.04648878299738527
+    SIGMOID = 0.21826990273744493
+    SPEED = -0.001355528078762762
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
   def get_steer_feedforward_function(self):
@@ -78,7 +87,9 @@ class CarInterface(CarInterfaceBase):
     elif self.CP.carFingerprint == CAR.BOLT_NR:
       return self.get_steer_feedforward_bolt
     elif self.CP.carFingerprint == CAR.SILVERADO_NR:
-      return self.get_steer_feedforward_silverado
+      return self.get_steer_feedforward_silverado    
+    elif self.CP.carFingerprint == CAR.SUBURBAN:
+      return self.get_steer_feedforward_suburban
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 

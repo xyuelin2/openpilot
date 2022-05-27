@@ -14,7 +14,7 @@ NUM_SLOTS = 20
 # messages that are present in DBC
 LAST_RADAR_MSG = RADAR_HEADER_MSG + NUM_SLOTS
 
-
+#TODO: JJS: Use the radarOffCan flag
 def create_radar_can_parser(car_fingerprint):
   if car_fingerprint not in (CAR.VOLT, CAR.MALIBU, CAR.HOLDEN_ASTRA, CAR.ACADIA, CAR.CADILLAC_ATS, CAR.ESCALADE_ESV):
     return None

@@ -11,6 +11,7 @@ from selfdrive.car.interfaces import CarInterfaceBase
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
+TransmissionType = car.CarParams.TransmissionType
 
 class CarInterface(CarInterfaceBase):
   @staticmethod
@@ -64,6 +65,12 @@ class CarInterface(CarInterfaceBase):
       ret.openpilotLongitudinalControl = False
       ret.radarOffCan = True
     
+    ret.transmissionType = TransmissionType.automatic
+    
+    #TODO: This should be used rather than the car lists
+    if candidate in {CAR.BOLT_NR, CAR.BOLT_EUV, CAR.VOLT, CAR.VOLT_NR}:
+      ret.transmissionType = TransmissionType.direct
+    
     # TODO: How Do we detect vehicles using stock cam-based ACC?
       #ret.pcmCruise = True
       
@@ -77,9 +84,6 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 0.5
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.enableGasInterceptor = 0x201 in fingerprint[0]
-    # # Check for Electronic Parking Brake
-    # TODO: JJS: Add param to cereal
-    # ret.hasEPB = 0x230 in fingerprint[0]
     
     # baseline longitudinal tune
     ret.longitudinalTuning.kpBP = [5., 35.]

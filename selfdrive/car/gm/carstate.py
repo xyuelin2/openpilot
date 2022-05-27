@@ -3,8 +3,8 @@ from common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.gm.values import DBC, CAR, EV_CAR, NO_ASCM, AccState, CanBus, STEER_THRESHOLD
-
+from selfdrive.car.gm.values import DBC, CAR, NO_ASCM, AccState, CanBus, STEER_THRESHOLD
+TransmissionType = car.CarParams.TransmissionType
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -12,7 +12,6 @@ class CarState(CarStateBase):
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["ECMPRDNL2"]["PRNDL2"]
     self.lka_steering_cmd_counter = 0
-    self.parkingBrake = 0
 
   def update(self, pt_cp, loopback_cp, body_cp):
     ret = car.CarState.new_message()
@@ -28,6 +27,8 @@ class CarState(CarStateBase):
     ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.01
+    ret.parkingBrake = (pt_cp.vl["VehicleIgnitionAlt"]["ParkBrake"] == 1)
+    
     gmGear = self.shifter_values.get(pt_cp.vl["ECMPRDNL2"]["PRNDL2"], None)
     manualMode = bool(pt_cp.vl["ECMPRDNL2"]["ManualMode"])
     
@@ -45,7 +46,7 @@ class CarState(CarStateBase):
     
     ret.brakePressed = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] >= 11 # TODO: JJS: PR this increase for trucks
         # Regen braking is braking
-    if self.car_fingerprint in EV_CAR:
+    if self.CP.transmissionType == TransmissionType.direct:
       ret.brakePressed = ret.brakePressed or pt_cp.vl["EBCMRegenPaddle"]["RegenPaddle"] != 0
 
     if ret.brakePressed:
@@ -82,10 +83,7 @@ class CarState(CarStateBase):
     ret.seatbeltUnlatched = pt_cp.vl["BCMDoorBeltStatus"]["LeftSeatBelt"] == 0
     ret.leftBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 1
     ret.rightBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 2
-    #TODO: JJS: Add hasEPB to cereal and use detection rather than hard coding...
-    #if self.CP.hasEPB:
-    if self.CP.carFingerprint != CAR.SUBURBAN and self.CP.carFingerprint != CAR.TAHOE_NR:
-      self.parkingBrake = pt_cp.vl["EPBStatus"]["EPBClosed"] == 1
+
 
     ret.cruiseState.available = pt_cp.vl["ECMEngineStatus"]["CruiseMainOn"] != 0
     if self.CP.enableGasInterceptor: # Flip CC main logic when pedal is being used for long
@@ -130,6 +128,7 @@ class CarState(CarStateBase):
       ("LKATorqueDeliveredStatus", "PSCMStatus"),
       ("TractionControlOn", "ESPStatus"),
       ("CruiseMainOn", "ECMEngineStatus"),
+      ("ParkBrake", "VehicleIgnitionAlt"),
     ]
 
     checks = [
@@ -145,21 +144,14 @@ class CarState(CarStateBase):
       ("ECMEngineStatus", 100),
       ("PSCMSteeringAngle", 100),
       ("EBCMBrakePedalPosition", 100),
-    ]
-
-    # TODO: Might be wise to find the non-electronic parking brake signal
-    # TODO: JJS Add hasEPB to cereal
-    if CP.carFingerprint != CAR.SUBURBAN and CP.carFingerprint != CAR.TAHOE_NR:
-      signals.append(("EPBClosed", "EPBStatus", 0))
-      checks.append(("EPBStatus", 20))
-    
+    ]    
 
     if CP.enableGasInterceptor:
       signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR"))
       signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR"))
       checks.append(("GAS_SENSOR", 50))
 
-    if CP.carFingerprint in EV_CAR:
+    if CP.transmissionType == TransmissionType.direct:
       signals.append(("RegenPaddle", "EBCMRegenPaddle"))
       checks.append(("EBCMRegenPaddle", 50))
 

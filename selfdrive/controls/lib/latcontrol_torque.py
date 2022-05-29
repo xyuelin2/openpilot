@@ -22,6 +22,15 @@ LOW_SPEED_FACTOR = 200
 JERK_THRESHOLD = 0.2
 
 
+def set_torque_tune(tune, MAX_LAT_ACCEL=2.5, FRICTION=.1):
+  tune.init('torque')
+  tune.torque.useSteeringAngle = True
+  tune.torque.kp = 1.0 / MAX_LAT_ACCEL
+  tune.torque.kf = 1.0 / MAX_LAT_ACCEL
+  tune.torque.ki = 0.1 / MAX_LAT_ACCEL
+  tune.torque.friction = FRICTION
+
+
 class LatControlTorque(LatControl):
   def __init__(self, CP, CI):
     super().__init__(CP, CI)
@@ -32,6 +41,7 @@ class LatControlTorque(LatControl):
     self.use_steering_angle = CP.lateralTuning.torque.useSteeringAngle
     self.friction = CP.lateralTuning.torque.friction
     self.kf = CP.lateralTuning.torque.kf
+    self.kf_left_factor = 1. if (CP.lateralTuning.torque.kfLeft <= 0. or self.kf == 0.) else CP.lateralTuning.torque.kfLeft / self.kf
 
   def reset(self):
     super().reset()
@@ -47,7 +57,9 @@ class LatControlTorque(LatControl):
       if self.use_steering_angle:
         actual_curvature = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
       else:
-        actual_curvature = llk.angularVelocityCalibrated.value[2] / CS.vEgo
+        actual_curvature_vm = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
+        actual_curvature_llk = llk.angularVelocityCalibrated.value[2] / CS.vEgo
+        actual_curvature = interp(CS.vEgo, [2.0, 5.0], [actual_curvature_vm, actual_curvature_llk])
       desired_lateral_accel = desired_curvature * CS.vEgo ** 2
       desired_lateral_jerk = desired_curvature_rate * CS.vEgo ** 2
       actual_lateral_accel = actual_curvature * CS.vEgo ** 2
@@ -61,6 +73,9 @@ class LatControlTorque(LatControl):
       # convert friction into lateral accel units for feedforward
       friction_compensation = interp(desired_lateral_jerk, [-JERK_THRESHOLD, JERK_THRESHOLD], [-self.friction, self.friction])
       ff += friction_compensation / self.kf
+      # switch to left feedforward (negative curvature)
+      if desired_curvature < 0.:
+        ff *= self.kf_left_factor
       freeze_integrator = CS.steeringRateLimited or CS.steeringPressed or CS.vEgo < 5
       output_torque = self.pid.update(error,
                                       feedforward=ff,

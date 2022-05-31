@@ -59,6 +59,8 @@ if platform.system() == "Darwin":
 if arch == "aarch64" and TICI:
   arch = "larch64"
 
+distro = platform.node()
+
 USE_WEBCAM = os.getenv("USE_WEBCAM") is not None
 
 lenv = {
@@ -134,6 +136,11 @@ else:
       "/usr/lib",
       "/usr/local/lib",
     ]
+
+    if distro == "fedora":
+      cpppath += [
+        "/usr/include/ffmpeg"
+      ]
 
   rpath += [
     Dir("#third_party/snpe/x86_64-linux-clang").abspath,
@@ -287,18 +294,32 @@ if arch == "Darwin":
   qt_env["FRAMEWORKS"] += [f"Qt{m}" for m in qt_modules] + ["OpenGL"]
   qt_env.AppendENVPath('PATH', os.path.join(qt_env['QTDIR'], "bin"))
 else:
-  qt_env['QTDIR'] = "/usr"
-  qt_dirs = [
-    f"/usr/include/{real_arch}-linux-gnu/qt5",
-    f"/usr/include/{real_arch}-linux-gnu/qt5/QtGui/5.12.8/QtGui",
-  ]
-  qt_dirs += [f"/usr/include/{real_arch}-linux-gnu/qt5/Qt{m}" for m in qt_modules]
+  if distro == "fedora":
+    qt_env['QTDIR'] = "/usr"
+    qt_dirs = [
+      f"/usr/include/qt5",
+      f"/usr/include/qt5/QtGui",
+    ]
+    qt_dirs += [f"/usr/include/qt5/Qt{m}" for m in qt_modules]
 
-  qt_libs = [f"Qt5{m}" for m in qt_modules]
-  if arch == "larch64":
-    qt_libs += ["GLESv2", "wayland-client"]
-  elif arch != "Darwin":
-    qt_libs += ["GL"]
+    qt_libs = [f"Qt5{m}" for m in qt_modules]
+    if arch == "larch64":
+      qt_libs += ["GLESv2", "wayland-client"]
+    elif arch != "Darwin":
+      qt_libs += ["GL"]
+  else:
+    qt_env['QTDIR'] = "/usr"
+    qt_dirs = [
+      f"/usr/include/{real_arch}-linux-gnu/qt5",
+      f"/usr/include/{real_arch}-linux-gnu/qt5/QtGui/5.12.8/QtGui",
+    ]
+    qt_dirs += [f"/usr/include/{real_arch}-linux-gnu/qt5/Qt{m}" for m in qt_modules]
+
+    qt_libs = [f"Qt5{m}" for m in qt_modules]
+    if arch == "larch64":
+      qt_libs += ["GLESv2", "wayland-client"]
+    elif arch != "Darwin":
+      qt_libs += ["GL"]
 
 qt_env.Tool('qt')
 qt_env['CPPPATH'] += qt_dirs + ["#selfdrive/ui/qt/"]

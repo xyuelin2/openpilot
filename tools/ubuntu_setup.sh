@@ -95,7 +95,9 @@ function install_fedora_common_requirements() {
   sudo dnf check-update
   sudo dnf install -y --setopt=install_weak_deps=False \
     autoconf \
-    make automake gcc gcc-c++ kernel-devel glibc patch \
+    make automake gcc gcc-c++ kernel-devel glibc patch avr-libc libcxx-devel \
+    arm-none-eabi \
+    arm-none-eabi-newlib \
     ca-certificates \
     clang \
     cmake \
@@ -145,12 +147,14 @@ function install_fedora_common_requirements() {
     ffmpeg-libs \
     qt5-qtbase-devel \
     qtchooser \
-    python3-devel
+    python3-devel \
+    qt5-qtconfiguration-devel
 }
 
 # Install Fedora 36 packages
 function install_fedora_36_requirements() {
   install_fedora_common_requirements
+  sudo ln -s /usr/lib/qtchooser/moc /usr/bin/moc
 }
 
 

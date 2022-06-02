@@ -53,12 +53,19 @@ class CarState(CarStateBase):
     else: # TODO: JJS: restore zeroing messy brake signals via PR
       ret.brake = 0.
 
-    if self.CP.enableGasInterceptor:
-      ret.gas = (pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS"] + pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS2"]) / 2.
-      ret.gasPressed = ret.gas > 15
-    else:
-      ret.gas = pt_cp.vl["AcceleratorPedal2"]["AcceleratorPedal2"] / 254.
-      ret.gasPressed = ret.gas > 1e-5
+    # if self.CP.enableGasInterceptor:
+    #   ret.gas = (pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS"] + pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS2"]) / 2.
+    #   ret.gasPressed = ret.gas > 15
+    # else:
+    #   ret.gas = pt_cp.vl["AcceleratorPedal2"]["AcceleratorPedal2"] / 254.
+    #   ret.gasPressed = ret.gas > 1e-5
+    ret.gas = pt_cp.vl["AcceleratorPedal2"]["AcceleratorPedal2"] / 254.
+    ret.gasPressed = ret.gas > 1e-5
+
+    # TODO: evaluate impact of using vehicle gas sensor for pressed
+    # e.g.: if the pedal thinks it is sending gas, but the car doesn't...
+    # Obvioulsy car wins... right?
+    # Without the scaling, the raw pedal values can be used to liveAdjust the pedal scaling
 
     ret.steeringAngleDeg = pt_cp.vl["PSCMSteeringAngle"]["SteeringWheelAngle"]
     ret.steeringRateDeg = pt_cp.vl["PSCMSteeringAngle"]["SteeringWheelRate"]

@@ -3,17 +3,19 @@ from cereal import car
 from math import fabs
 
 from common.conversions import Conversions as CV
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.gm.values import CAR, CruiseButtons, \
-                                     CarControllerParams, NO_ASCM
+from selfdrive.car import STD_CARGO_KG, create_button_enable_events, create_button_event, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
+from selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, NO_ASCM
 from selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
 TransmissionType = car.CarParams.TransmissionType
+BUTTONS_DICT = {CruiseButtons.RES_ACCEL: ButtonType.accelCruise, CruiseButtons.DECEL_SET: ButtonType.decelCruise,
+                CruiseButtons.MAIN: ButtonType.altButton3, CruiseButtons.CANCEL: ButtonType.cancel}
 
-class CarInterface(CarInterfaceBase):
+
+class CarInterface(CarInterfaceBase):  
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     params = CarControllerParams()
@@ -59,6 +61,15 @@ class CarInterface(CarInterfaceBase):
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
     
+    # Saving this for a rainy day...
+    # # Dynamically replace the DBC used based on the magic toggle value
+    # params = Params()
+    # new_pedal_transform = params.get_bool("GMNewPedalTransform")
+    # if (new_pedal_transform):
+    #   for c in DBC.keys():
+    #     v = DBC[c]
+    #     DBC[c] = dbc_dict('gm_global_a_powertrain_bolt_generated', v["radar"], v["chassis"], v["body"])
+    # CarInterface.using_new_pedal_transform = new_pedal_transform
     
     # LKAS only - no radar, no long 
     if candidate in NO_ASCM:
@@ -114,6 +125,21 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kiV = [0.]
       ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_volt()
       ret.steerActuatorDelay = 0.2
+      
+      if ret.enableGasInterceptor:
+        #Note: Low speed, stop and go not tested. Should be fairly smooth on highway
+        ret.longitudinalTuning.kpBP = [0., 35.0]
+        ret.longitudinalTuning.kpV = [0.4, 0.06] 
+        ret.longitudinalTuning.kiBP = [0., 35.0] 
+        ret.longitudinalTuning.kiV = [0.0, 0.04]
+        ret.longitudinalTuning.kf = 0.25
+        ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
+        ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+        # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
+        ret.stoppingControl = True
+
 
     elif candidate == CAR.MALIBU or candidate == CAR.MALIBU_NR:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
@@ -183,20 +209,34 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
       ret.lateralTuning.pid.kf = 0.0002
       
-      # TODO: Needs refinement for stop and go, doesn't fully stop
-      # Assumes the Bolt is using L-Mode for regen braking
-      ret.longitudinalTuning.kpBP = [0., 35]
-      ret.longitudinalTuning.kpV = [0.21, 0.46] 
-      ret.longitudinalTuning.kiBP = [0., 35.] 
-      ret.longitudinalTuning.kiV = [0.22, 0.33]
-      ret.stoppingDecelRate = 0.17  # reach stopping target smoothly, brake_travel/s while trying to stop
-      ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
-      ret.vEgoStopping = 0.6  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
-      ret.vEgoStarting = 0.6  # Speed at which the car goes into starting state, when car starts requesting starting accel,
-      # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
-      ret.stoppingControl = True
-      ret.longitudinalTuning.deadzoneBP = [0.]
-      ret.longitudinalTuning.deadzoneV = [0.]
+      
+      if ret.enableGasInterceptor:
+        #Note: Low speed, stop and go not tested. Should be fairly smooth on highway
+        ret.longitudinalTuning.kpBP = [0., 35.0]
+        ret.longitudinalTuning.kpV = [0.4, 0.06] 
+        ret.longitudinalTuning.kiBP = [0., 35.0] 
+        ret.longitudinalTuning.kiV = [0.0, 0.04]
+        ret.longitudinalTuning.kf = 0.25
+        ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
+        ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+        # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
+        ret.stoppingControl = True
+
+        # You can see how big the changes are with the new approach
+
+        # darknight11's tuning efforts using old pedal transform
+        # ret.longitudinalTuning.kpBP = [0., 35]
+        # ret.longitudinalTuning.kpV = [0.21, 0.46] 
+        # ret.longitudinalTuning.kiBP = [0., 35.] 
+        # ret.longitudinalTuning.kiV = [0.22, 0.33]
+        # ret.stoppingDecelRate = 0.17  # reach stopping target smoothly, brake_travel/s while trying to stop
+        # ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        # ret.vEgoStopping = 0.6  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        # ret.vEgoStarting = 0.6  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+
+
       
       
     elif candidate == CAR.EQUINOX_NR:
@@ -346,32 +386,40 @@ class CarInterface(CarInterfaceBase):
 
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
-    buttonEvents = []
-
     if self.CS.cruise_buttons != self.CS.prev_cruise_buttons and self.CS.prev_cruise_buttons != CruiseButtons.INIT:
-      be = car.CarState.ButtonEvent.new_message()
-      be.type = ButtonType.unknown
-      if self.CS.cruise_buttons != CruiseButtons.UNPRESS:
-        be.pressed = True
-        but = self.CS.cruise_buttons
-      else:
-        be.pressed = False
-        but = self.CS.prev_cruise_buttons
-      if but == CruiseButtons.RES_ACCEL:
-        if not (ret.cruiseState.enabled and ret.standstill):
-          be.type = ButtonType.accelCruise  # Suppress resume button if we're resuming from stop so we don't adjust speed.
-      elif but == CruiseButtons.DECEL_SET:
-        be.type = ButtonType.decelCruise
-      elif but == CruiseButtons.CANCEL:
-        be.type = ButtonType.cancel
-      elif but == CruiseButtons.MAIN:
-        be.type = ButtonType.altButton3
-      buttonEvents.append(be)
+      be = create_button_event(self.CS.cruise_buttons, self.CS.prev_cruise_buttons, BUTTONS_DICT, CruiseButtons.UNPRESS)
 
-    ret.buttonEvents = buttonEvents
-    # TODO: JJS Move this to appropriate place (check other brands)
-    EXTRA_GEARS = [GearShifter.sport, GearShifter.low, GearShifter.eco, GearShifter.manumatic]
-    events = self.create_common_events(ret, extra_gears = EXTRA_GEARS, pcm_enable=self.CS.CP.pcmCruise)
+      # Suppress resume button if we're resuming from stop so we don't adjust speed.
+      if be.type == ButtonType.accelCruise and (ret.cruiseState.enabled and ret.standstill):
+        be.type = ButtonType.unknown
+
+      ret.buttonEvents = [be]
+
+    events = self.create_common_events(ret, extra_gears = [GearShifter.sport, GearShifter.low, GearShifter.eco, GearShifter.manumatic], pcm_enable=self.CP.pcmCruise)
+
+
+    # # From Honda
+    # if self.CP.pcmCruise:
+    #   # we engage when pcm is active (rising edge)
+    #   if ret.cruiseState.enabled and not self.CS.out.cruiseState.enabled:
+    #     events.add(EventName.pcmEnable)
+    ## above handled in create_common_events
+    #   elif not ret.cruiseState.enabled and (c.actuators.accel >= 0. or not self.CP.openpilotLongitudinalControl):
+    #     # it can happen that car cruise disables while comma system is enabled: need to
+    #     # keep braking if needed or if the speed is very low
+    #     if ret.vEgo < self.CP.minEnableSpeed + 2.:
+    #       # non loud alert if cruise disables below 25mph as expected (+ a little margin)
+    #       events.add(EventName.speedTooLow)
+    #     else:
+    #       events.add(EventName.cruiseDisabled)
+    # if self.CS.CP.minEnableSpeed > 0 and ret.vEgo < 0.001:
+    #   events.add(EventName.manualRestart)
+  
+    # TODO: pcmEnable means use stock ACC
+    # TODO: We should ignore buttons and use stock ACC state
+    # TODO: create_common_events and create_button_enable_events appear to now handle this
+    # TODO: Honda has the above extra code - this may explain scott's strange alerts!
+    # Note: this update changes behavior - have steve / scott / uncle tone test / Bolt EUV test
 
     if ret.vEgo < self.CP.minEnableSpeed:
       events.add(EventName.belowEngageSpeed)
@@ -381,13 +429,7 @@ class CarInterface(CarInterfaceBase):
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     # handle button presses
-    for b in ret.buttonEvents:
-      # do enable on both accel and decel buttons
-      if b.type in (ButtonType.accelCruise, ButtonType.decelCruise) and not b.pressed:
-        events.add(EventName.buttonEnable)
-      # do disable on button down
-      if b.type == ButtonType.cancel and b.pressed:
-        events.add(EventName.buttonCancel)
+    events.events.extend(create_button_enable_events(ret.buttonEvents, pcm_cruise=self.CP.pcmCruise))
 
     ret.events = events.to_msg()
 

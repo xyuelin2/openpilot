@@ -18,7 +18,7 @@ CAR_CHARGING_RATE_W = 45
 VBATT_PAUSE_CHARGING = 11.0           # Lower limit on the LPF car battery voltage
 VBATT_INSTANT_PAUSE_CHARGING = 7.0    # Lower limit on the instant car battery voltage measurements to avoid triggering on instant power loss
 MAX_TIME_OFFROAD_S = 30*3600
-MIN_ON_TIME_S = 30*3600 #JJS: Normally just 1 hour; bumping to 30 hours for testing
+MIN_ON_TIME_S = 30*3600 # TODO: JJS Revert - for debugging. 30 hours instead of one
 
 class PowerMonitoring:
   def __init__(self):

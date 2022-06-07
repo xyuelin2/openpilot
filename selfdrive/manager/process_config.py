@@ -51,7 +51,7 @@ procs = [
   PythonProcess("uploader", "selfdrive.loggerd.uploader", offroad=True),
   PythonProcess("statsd", "selfdrive.statsd", offroad=True),
 
-  NativeProcess("bridge", "cereal/messaging", ["./bridge"], onroad=False, callback=notcar),
+  NativeProcess("bridge", "cereal/messaging", ["./bridge"]), # JJS - always on for tuning
   PythonProcess("webjoystick", "tools.joystick.web", onroad=False, callback=notcar),
 
   # Experimental

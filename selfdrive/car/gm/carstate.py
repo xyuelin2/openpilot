@@ -3,7 +3,7 @@ from common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.gm.values import DBC, CAR, NO_ASCM, AccState, CanBus, STEER_THRESHOLD
+from selfdrive.car.gm.values import DBC, NO_ASCM, AccState, CanBus, STEER_THRESHOLD
 TransmissionType = car.CarParams.TransmissionType
 
 class CarState(CarStateBase):
@@ -27,31 +27,22 @@ class CarState(CarStateBase):
     ret.vEgoRaw = mean([ret.wheelSpeeds.fl, ret.wheelSpeeds.fr, ret.wheelSpeeds.rl, ret.wheelSpeeds.rr])
     ret.vEgo, ret.aEgo = self.update_speed_kf(ret.vEgoRaw)
     ret.standstill = ret.vEgoRaw < 0.01
-    ret.parkingBrake = (pt_cp.vl["VehicleIgnitionAlt"]["ParkBrake"] == 1)
-    
-    gmGear = self.shifter_values.get(pt_cp.vl["ECMPRDNL2"]["PRNDL2"], None)
-    manualMode = bool(pt_cp.vl["ECMPRDNL2"]["ManualMode"])
-    
-    # In manumatic, the value of PRNDL2 represents the max gear
-    # parse_gear_shifter expects "T" for manumatic
-    # TODO: JJS Add manumatic max gear to cereal and parse (validate value in Acadia)
-    if manualMode:
-      gmGear = "T"
-    
-    # TODO: JJS: Should We just have 0 map to P in the dbc?
-    if gmGear == "Shifting":
-      gmGear = "P"
-    
-    ret.gearShifter = self.parse_gear_shifter(gmGear)
-    
-    ret.brakePressed = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] >= 11 # TODO: JJS: PR this increase for trucks
-        # Regen braking is braking
+    if pt_cp.vl["ECMPRDNL2"]["ManualMode"] == 1:
+      ret.gearShifter = self.parse_gear_shifter("T")
+      ret.manumaticGear = pt_cp.vl["ECMPRDNL2"]["PRNDL2"]
+    else:
+      ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(pt_cp.vl["ECMPRDNL2"]["PRNDL2"], None))
+
+    # Brake pedal's potentiometer returns near-zero reading even when pedal is not pressed.
+    ret.brake = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] / 0xd0
+    ret.brakePressed = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] >= 10
+
+    # Regen braking is braking
     if self.CP.transmissionType == TransmissionType.direct:
       ret.brakePressed = ret.brakePressed or pt_cp.vl["EBCMRegenPaddle"]["RegenPaddle"] != 0
 
-    if ret.brakePressed:
-      ret.brake = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] / 0xd0
-    else: # TODO: JJS: restore zeroing messy brake signals via PR
+    if not ret.brakePressed:
+      # TODO: JJS: restore zeroing messy brake signals via PR
       ret.brake = 0.
 
     if self.CP.enableGasInterceptor:
@@ -84,7 +75,7 @@ class CarState(CarStateBase):
     ret.leftBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 1
     ret.rightBlinker = pt_cp.vl["BCMTurnSignals"]["TurnSignals"] == 2
 
-
+    ret.parkingBrake = pt_cp.vl["VehicleIgnitionAlt"]["ParkBrake"] == 1
     ret.cruiseState.available = pt_cp.vl["ECMEngineStatus"]["CruiseMainOn"] != 0
     if self.CP.enableGasInterceptor: # Flip CC main logic when pedal is being used for long
       ret.cruiseState.available = (not ret.cruiseState.available)
@@ -127,6 +118,7 @@ class CarState(CarStateBase):
       ("LKATorqueDelivered", "PSCMStatus"),
       ("LKATorqueDeliveredStatus", "PSCMStatus"),
       ("TractionControlOn", "ESPStatus"),
+      ("ParkBrake", "VehicleIgnitionAlt"),
       ("CruiseMainOn", "ECMEngineStatus"),
       ("ParkBrake", "VehicleIgnitionAlt"),
     ]
@@ -137,6 +129,7 @@ class CarState(CarStateBase):
       ("PSCMStatus", 10),
       ("ESPStatus", 10),
       ("BCMDoorBeltStatus", 10),
+      ("VehicleIgnitionAlt", 10),
       ("EBCMWheelSpdFront", 20),
       ("EBCMWheelSpdRear", 20),
       ("AcceleratorPedal2", 33),
@@ -144,7 +137,7 @@ class CarState(CarStateBase):
       ("ECMEngineStatus", 100),
       ("PSCMSteeringAngle", 100),
       ("EBCMBrakePedalPosition", 100),
-    ]    
+    ]
 
     if CP.enableGasInterceptor:
       signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR"))

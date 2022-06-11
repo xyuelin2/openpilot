@@ -7,7 +7,7 @@ from common.basedir import BASEDIR
 from system.version import is_comma_remote, is_tested_branch
 from selfdrive.car.interfaces import get_interface_attr
 from selfdrive.car.fingerprints import eliminate_incompatible_cars, all_legacy_fingerprint_cars
-from selfdrive.car.vin import get_vin, VIN_UNKNOWN
+from selfdrive.car.vin import get_vin, VIN_UNKNOWN, GMVinCapturer
 from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car, get_present_ecus
 from system.swaglog import cloudlog
 import cereal.messaging as messaging
@@ -118,6 +118,7 @@ def fingerprint(logcan, sendcan):
   frame_fingerprint = 25  # 0.25s
   car_fingerprint = None
   done = False
+  gm_vin_scanner = GMVinCapturer()
 
   # drain CAN socket so we always get the latest messages
   messaging.drain_sock_raw(logcan)
@@ -126,6 +127,11 @@ def fingerprint(logcan, sendcan):
     a = get_one_can(logcan)
 
     for can in a.can:
+      if not gm_vin_scanner.complete:
+        vinTmp = gm_vin_scanner.read(can)
+        if vinTmp is not None:
+          cloudlog.warning("Found likely GM VIN %s", vinTmp)
+          Params().put("CarVin", vinTmp)
       # The fingerprint dict is generated for all buses, this way the car interface
       # can use it to detect a (valid) multipanda setup and initialize accordingly
       if can.src < 128:

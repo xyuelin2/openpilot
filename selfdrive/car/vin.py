@@ -89,7 +89,7 @@ class GMVinCapturer:
 
     if not self.__need_a and not self.__need_b:
       vin_t  = "1" + self.__a + self.__b      
-      if GMVinCapturer.__gm_validate_vin(vin_t):
+      if self.__gm_validate_vin(vin_t):
         self.vin = vin_t
         self.__success = True
         return vin

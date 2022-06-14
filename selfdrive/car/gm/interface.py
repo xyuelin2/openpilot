@@ -12,6 +12,11 @@ ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
 
+def get_steer_feedforward_erf(angle, speed, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF):
+  x = ANGLE_COEF * (angle + ANGLE_OFFSET)
+  sigmoid = erf(x)
+  return (SIGMOID_COEF * sigmoid) / (max(speed - SPEED_OFFSET, 0.1) * SPEED_COEF)**SPEED_POWER
+
 def get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED):
   x = ANGLE * (desired_angle + ANGLE_OFFSET)
   sigmoid = x / (1 + fabs(x))
@@ -69,6 +74,17 @@ class CarInterface(CarInterfaceBase):
     SPEED = -0.0016656455765509301
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
   
+  # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
+  @staticmethod
+  def get_steer_feedforward_tahoe(desired_lateral_accel, v_ego):
+    ANGLE_COEF = -0.53345154
+    ANGLE_OFFSET = 0.
+    SPEED_OFFSET = 0.
+    SPEED_POWER = 1.
+    SIGMOID_COEF = 17.81939495
+    SPEED_COEF = -0.47166994
+    return get_steer_feedforward_erf(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF)
+  
   @staticmethod
   def get_steer_feedforward_suburban(desired_angle, v_ego):
     ANGLE = 0.06562376600261893
@@ -91,6 +107,8 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_silverado
     elif self.CP.carFingerprint == CAR.SUBURBAN:
       return self.get_steer_feedforward_suburban
+    elif self.CP.carFingerprint == CAR.TAHOE_NR:
+      return self.get_steer_feedforward_tahoe
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 
@@ -302,9 +320,11 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
       ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.kf = 1.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kf = 1.0 # custom ff
+      ret.lateralTuning.torque.kfLeft = 1.0 # custom ff
       ret.lateralTuning.torque.ki = 0.50 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.friction = 0.1
+      ret.lateralTuning.torque.kd = 6.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.friction = 0.01
 
     elif candidate == CAR.SILVERADO_NR:
       # Thanks skip for the tune!

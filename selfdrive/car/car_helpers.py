@@ -128,10 +128,8 @@ def fingerprint(logcan, sendcan):
 
     for can in a.can:
       if not gm_vin_scanner.complete:
-        vinTmp = gm_vin_scanner.read(can)
-        if vinTmp is not None:
-          cloudlog.warning("Found likely GM VIN %s", vinTmp)
-          Params().put("CarVin", vinTmp)
+        gm_vin_scanner.read(can)
+
       # The fingerprint dict is generated for all buses, this way the car interface
       # can use it to detect a (valid) multipanda setup and initialize accordingly
       if can.src < 128:
@@ -157,6 +155,10 @@ def fingerprint(logcan, sendcan):
     done = failed or succeeded
 
     frame += 1
+
+  if gm_vin_scanner.success:
+    cloudlog.warning("Found likely GM VIN %s", gm_vin_scanner.vin)
+    Params().put("CarVin", gm_vin_scanner.vin)
 
   exact_match = True
   source = car.CarParams.FingerprintSource.can

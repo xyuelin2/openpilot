@@ -66,16 +66,20 @@ class GMVinCapturer:
     
     if self.complete:
       return
-    
-    if len(msg.dat) != 8:
-      self.complete = True
-      return
-    
+        
     if self.__need_a and msg.address == GMVinCapturer.PART_A_MSG_ID:
+      if len(msg.dat) != 8:
+        cloudlog.warning(f"VIN Capture:  wrong size for {GMVinCapturer.PART_A_MSG_ID}")
+        self.complete = True
+        return
       self.__a = msg.dat.decode()
       self.__need_a = False
       print(f"GMVIN Saw message part A ({msg.address}): {self.__a}")
     elif self.__need_b and msg.address == GMVinCapturer.PART_B_MSG_ID:
+      if len(msg.dat) != 8:
+        cloudlog.warning(f"VIN Capture:  wrong size for {GMVinCapturer.PART_B_MSG_ID}")
+        self.complete = True
+        return
       self.__b = msg.dat.decode()
       self.__need_b = False
       print(f"GMVIN Saw message part B ({msg.address}): {self.__b}")

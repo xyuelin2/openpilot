@@ -42,7 +42,8 @@ def get_vin(logcan, sendcan, bus, timeout=0.1, retry=5, debug=False):
   return 0, VIN_UNKNOWN
 
 
-class GMVinCapturer:  
+class GMVinCapturer:
+  # TODO: Generalize in case other brands need similar method
   PART_A_MSG_ID: int = 1300
   PART_B_MSG_ID: int = 1249
   

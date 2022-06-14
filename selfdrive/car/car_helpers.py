@@ -118,6 +118,7 @@ def fingerprint(logcan, sendcan):
   car_fingerprint = None
   done = False
   gm_vin_scanner = GMVinCapturer()
+  no_vin = (vin == VIN_UNKNOWN)
 
   # drain CAN socket so we always get the latest messages
   messaging.drain_sock_raw(logcan)
@@ -126,7 +127,8 @@ def fingerprint(logcan, sendcan):
     a = get_one_can(logcan)
 
     for can in a.can:
-      if not gm_vin_scanner.complete:
+      # If we didn't get a VIN via ISO-TP, attempt to use std CAN signals
+      if no_vin and not gm_vin_scanner.complete:
         gm_vin_scanner.read(can)
 
       # The fingerprint dict is generated for all buses, this way the car interface
@@ -157,7 +159,7 @@ def fingerprint(logcan, sendcan):
 
   if gm_vin_scanner.success:
     vin = gm_vin_scanner.vin
-    cloudlog.warning("GM VIN %s", vin)
+    cloudlog.warning("CAN VIN %s", vin)
 
 
   cloudlog.warning("VIN %s", vin)

@@ -55,21 +55,17 @@ class GMVinCapturer:
     self.__b: str = None
     self.vin: str = None
     self.complete: bool = False
-    cloudlog.warning(f"GM Vin Cap init")
     
   def read(self, msg):
     """Check if a CAN message is a VIN part and collect values
     Args:
         msg (Any): Can message
     """
-    # Attempted to makes this as fast as possible, and
-    # possibly tolerant of re-entrance
     
     if self.complete:
       return
         
     if self.__need_a and msg.address == GMVinCapturer.PART_A_MSG_ID:
-      cloudlog.warning(f"Encountered message A")
       if len(msg.dat) != 8:
         cloudlog.warning(f"VIN Capture:  wrong size for {GMVinCapturer.PART_A_MSG_ID}")
         self.complete = True
@@ -77,9 +73,7 @@ class GMVinCapturer:
       self.__a = msg.dat.decode()
       cloudlog.warning(f"Msg A decoded: {self.__a}")
       self.__need_a = False
-      cloudlog.warning(f"GMVIN Saw message part A ({msg.address}): {self.__a}")
     elif self.__need_b and msg.address == GMVinCapturer.PART_B_MSG_ID:
-      cloudlog.warning(f"Encountered message A")
       if len(msg.dat) != 8:
         cloudlog.warning(f"VIN Capture:  wrong size for {GMVinCapturer.PART_B_MSG_ID}")
         self.complete = True
@@ -87,17 +81,14 @@ class GMVinCapturer:
       self.__b = msg.dat.decode()
       cloudlog.warning(f"Msg B decoded: {self.__b}")
       self.__need_b = False
-      cloudlog.warning(f"GMVIN Saw message part B ({msg.address}): {self.__b}")
 
 
     if (not self.__need_a) and (not self.__need_b):
-      vin_t  = "1" + self.__a + self.__b
-      cloudlog.warning(f"GMVIN Got both parts: {vin_t}")  
+      vin_t  = "1" + self.__a + self.__b 
       if check_vin(vin_t):
         self.vin = vin_t
         self.success = True
-      else:
-        cloudlog.warning(f"GMVIN VIN was bad: {vin_t}")  
+        
       self.complete = True
 
 

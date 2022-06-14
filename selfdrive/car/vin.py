@@ -18,6 +18,11 @@ UDS_VIN_RESPONSE = bytes([uds.SERVICE_TYPE.READ_DATA_BY_IDENTIFIER + 0x40]) + st
 VIN_UNKNOWN = "0" * 17
 
 
+def check_vin(vin: str) -> bool:
+  # 17 characters, 0-9, A-Z except 'I', 'H', 'O' and 'Q'
+  return vin is not None and re.fullmatch(r"[0-9A-HJ-NPR-Z]{17}", vin, flags=re.I | re.A) is not None
+
+
 def get_vin(logcan, sendcan, bus, timeout=0.1, retry=5, debug=False):
   for request, response in ((UDS_VIN_REQUEST, UDS_VIN_RESPONSE), (OBD_VIN_REQUEST, OBD_VIN_RESPONSE)):
     for i in range(retry):
@@ -37,10 +42,9 @@ def get_vin(logcan, sendcan, bus, timeout=0.1, retry=5, debug=False):
   return 0, VIN_UNKNOWN
 
 
-class GMVinCapturer:
-  __INVALID_VIN_REGEX = re.compile(r"[OoIiQq]")
-  PART_A_MSG_ID = 1300
-  PART_B_MSG_ID = 1249
+class GMVinCapturer:  
+  PART_A_MSG_ID: int = 1300
+  PART_B_MSG_ID: int = 1249
   
   def __init__(self):
     self.__need_a: bool = True
@@ -50,46 +54,41 @@ class GMVinCapturer:
     self.__b: str = None
     self.vin: str = None
     self.complete: bool = False
-  
-  def __gm_validate_vin(self, vin: str) -> bool:
-    # TODO: inline
-    # TODO: there is another global restriction on the year character
-    # Basic sanity check. VIN rules vary globally, and while a 1G
-    # prefix applies to GM in the US and canada, there are EU vehicles
-    # identical to US counterparts
-    if vin is None or not isinstance(vin, str) or len(vin) != 17 or GMVinCapturer.__INVALID_VIN_REGEX.match(vin):
-      return False
-    #17-character VIN, which does not include the letters O (o), I (i), and Q (q) (to avoid confusion with numerals 0, 1, and 9).
-    return True
-  
+    
   def read(self, msg):
     """Check if a CAN message is a VIN part and collect values
     Args:
         msg (Any): Can message
     """
+    # Attempted to makes this as fast as possible, and
+    # possibly tolerant of re-entrance
+    
     if self.complete:
       return
     
     if len(msg.dat) != 8:
       self.complete = True
-      self.success = False
-      self.vin = None
       return
     
-    if msg.address == GMVinCapturer.PART_A_MSG_ID and self.__need_a:
+    if self.__need_a and msg.address == GMVinCapturer.PART_A_MSG_ID:
       self.__a = msg.dat.decode()
       self.__need_a = False
-    elif msg.address == GMVinCapturer.PART_B_MSG_ID and self.__need_b:
+      print(f"GMVIN Saw message part A ({msg.address}): {self.__a}")
+    elif self.__need_b and msg.address == GMVinCapturer.PART_B_MSG_ID:
       self.__b = msg.dat.decode()
       self.__need_b = False
+      print(f"GMVIN Saw message part B ({msg.address}): {self.__b}")
 
-    if not self.__need_a and not self.__need_b:
-      vin_t  = "1" + self.__a + self.__b      
-      if self.__gm_validate_vin(vin_t):
+
+    if (not self.__need_a) and (not self.__need_b):
+      vin_t  = "1" + self.__a + self.__b
+      print(f"GMVIN Got both parts: {vin_t}")  
+      if check_vin(vin_t):
         self.vin = vin_t
         self.success = True
-        self.complete = True
-        return
+      else:
+        print(f"GMVIN VIN was bad: {vin_t}")  
+      self.complete = True
 
 
 if __name__ == "__main__":

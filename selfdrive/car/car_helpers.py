@@ -7,7 +7,7 @@ from common.basedir import BASEDIR
 from system.version import is_comma_remote, is_tested_branch
 from selfdrive.car.interfaces import get_interface_attr
 from selfdrive.car.fingerprints import eliminate_incompatible_cars, all_legacy_fingerprint_cars
-from selfdrive.car.vin import get_vin, VIN_UNKNOWN, GMVinCapturer
+from selfdrive.car.vin import get_vin, VIN_UNKNOWN, GMVinCapturer, check_vin
 from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car, get_present_ecus
 from system.swaglog import cloudlog
 import cereal.messaging as messaging
@@ -80,6 +80,7 @@ def fingerprint(logcan, sendcan):
   fixed_fingerprint = os.environ.get('FINGERPRINT', "")
   skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
   ecu_responses = set()
+  vin = VIN_UNKNOWN
 
   if not fixed_fingerprint and not skip_fw_query:
     # Vin query only reliably works thorugh OBDII
@@ -106,11 +107,9 @@ def fingerprint(logcan, sendcan):
     vin = VIN_UNKNOWN
     exact_fw_match, fw_candidates, car_fw = True, set(), []
 
-  if len(vin) != 17:
+  if not check_vin(vin):
     cloudlog.event("Malformed VIN", vin=vin, error=True)
     vin = VIN_UNKNOWN
-  cloudlog.warning("VIN %s", vin)
-  Params().put("CarVin", vin)
 
   finger = gen_empty_fingerprint()
   candidate_cars = {i: all_legacy_fingerprint_cars() for i in [0, 1]}  # attempt fingerprint on both bus 0 and 1
@@ -157,8 +156,12 @@ def fingerprint(logcan, sendcan):
     frame += 1
 
   if gm_vin_scanner.success:
-    cloudlog.warning("Found likely GM VIN %s", gm_vin_scanner.vin)
-    Params().put("CarVin", gm_vin_scanner.vin)
+    vin = gm_vin_scanner.vin
+    cloudlog.warning("GM VIN %s", vin)
+
+
+  cloudlog.warning("VIN %s", vin)
+  Params().put("CarVin", vin)
 
   exact_match = True
   source = car.CarParams.FingerprintSource.can

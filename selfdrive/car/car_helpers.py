@@ -153,13 +153,21 @@ def fingerprint(logcan, sendcan):
     # bail if no cars left or we've been waiting for more than 2s
     failed = (all(len(cc) == 0 for cc in candidate_cars.values()) and frame > frame_fingerprint) or frame > 200
     succeeded = car_fingerprint is not None
+    
+    # Runtime FP is early-exit - sometimes it may need a few extra frames to get VIN
+    if (not gm_vin_scanner.complete) and frame <= 100:
+      succeeded = False
+      
     done = failed or succeeded
 
     frame += 1
+    
 
   if gm_vin_scanner.success:
     vin = gm_vin_scanner.vin
-    cloudlog.warning("CAN VIN %s", vin)
+    #cloudlog.warning("CAN VIN %s", vin)
+  else:
+    cloudlog.warning(f"CAN VIN FAILED. FP Frame {frame - 1}, complete: {gm_vin_scanner.complete}, success: {gm_vin_scanner.success}, call_count: {gm_vin_scanner.call_count}")
 
   cloudlog.warning("VIN %s", vin)
   Params().put("CarVin", vin)

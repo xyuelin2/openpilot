@@ -12,7 +12,6 @@ from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car, get_pres
 from system.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
-from selfdrive.car.gm.interface import CarInterface as GmCarInterface
 
 EventName = car.CarEvent.EventName
 
@@ -155,24 +154,14 @@ def fingerprint(logcan, sendcan):
     failed = (all(len(cc) == 0 for cc in candidate_cars.values()) and frame > frame_fingerprint) or frame > 200
     succeeded = car_fingerprint is not None
     
+    # Runtime FP is early-exit - sometimes it may need a few extra frames to get VIN
+    if (not gm_vin_scanner.complete) and frame <= 100:
+      succeeded = False
+      
     done = failed or succeeded
 
     frame += 1
-  
-  # If we have no VIN, we have a fingerprint, the VIN scan is incomplete, we haven't maxed out the frame
-  # and the fingerprinted car is a GM vehicle *deep breath*
-  # Then we will keep reading messages up to a total of 2 seconds to get that VIN
-  # Because (for GM) the VIN messages are in all the fingerprints, it's ok
-  if vin == VIN_UNKNOWN and car_fingerprint is not None and not gm_vin_scanner.complete and frame <= 200 \
-    and isinstance(interfaces[car_fingerprint].CarInterface, GmCarInterface):
-      done = False
-      while not done:
-        a = get_one_can(logcan)
-        for can in a.can:
-          if can.src == 0 and not gm_vin_scanner.complete:
-            gm_vin_scanner.read(can)
-        done = gm_vin_scanner.complete or frame > 200
-        frame += 1
+    
 
   if gm_vin_scanner.success:
     vin = gm_vin_scanner.vin

@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="tab1">
+   <Container>
+    <DockSplitter count="5" sizes="0.200231;0.200231;0.199074;0.200231;0.200231" orientation="-">
+     <DockArea name="...">
+      <plot flip_x="false" flip_y="false" style="Lines" mode="TimeSeries">
+       <range left="27052.277433" top="2.614818" right="27401.875570" bottom="-2.887700"/>
+       <limitY/>
+       <curve color="#f14cc1" name="/controlsState/lateralControlState/pidState/f"/>
+       <curve color="#9467bd" name="/controlsState/lateralControlState/pidState/i"/>
+       <curve color="#17becf" name="/controlsState/lateralControlState/pidState/p"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Blue: Desired Steering Angle, Yellow: Steering Angle, Red: Angle Error">
+      <plot flip_x="false" flip_y="false" style="Lines" mode="TimeSeries">
+       <range left="27052.277433" top="891.755576" right="27401.875570" bottom="-779.770468"/>
+       <limitY/>
+       <curve color="#bcbd22" name="/controlsState/lateralControlState/pidState/steeringAngleDeg"/>
+       <curve color="#1f77b4" name="/controlsState/lateralControlState/pidState/steeringAngleDesiredDeg"/>
+       <curve color="#d62728" name="/controlsState/lateralControlState/pidState/angleError"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Orange: Desired Curvature, Green: Curvature">
+      <plot flip_x="false" flip_y="false" style="Lines" mode="TimeSeries">
+       <range left="27052.277433" top="0.219935" right="27401.875570" bottom="-0.191518"/>
+       <limitY/>
+       <curve color="#ff7f0e" name="/controlsState/desiredCurvature"/>
+       <curve color="#1ac938" name="/controlsState/curvature"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Blue: EPS Torque, Green: Driver Torque">
+      <plot flip_x="false" flip_y="false" style="Lines" mode="TimeSeries">
+       <range left="27052.277433" top="3.200000" right="27401.875570" bottom="-3.200000"/>
+       <limitY max="3.2" min="-3.2"/>
+       <curve color="#17becf" name="/can/0/PSCMStatus/LKATorqueDelivered"/>
+       <curve color="#bcbd22" name="/can/0/PSCMStatus/LKADriverAppldTrq"/>
+      </plot>
+     </DockArea>
+     <DockArea name="Green: LKA Sent, Red: LKA Dropped">
+      <plot flip_x="false" flip_y="false" style="Dots" mode="TimeSeries">
+       <range left="27052.277433" top="314.625000" right="27401.875570" bottom="-299.625000"/>
+       <limitY/>
+       <curve color="#3bdf0c" name="/can/128/ASCMLKASteeringCmd/LKASteeringCmd"/>
+       <curve color="#fd0006" name="/can/192/ASCMLKASteeringCmd/LKASteeringCmd"/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="0"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad Rlog"/>
+  <plugin ID="Cereal Subscriber"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

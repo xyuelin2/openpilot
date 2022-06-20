@@ -95,6 +95,12 @@ class CarInterface(CarInterfaceBase):
     SPEED = -0.001355528078762762
     return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
 
+  def get_steer_feedforward_function_torque(self):
+    if self.CP.carFingerprint == CAR.SILVERADO_NR:
+      return self.get_steer_feedforward_silverado
+    else:
+      return CarInterfaceBase.get_steer_feedforward_torque_default
+  
   def get_steer_feedforward_function(self):
     if self.CP.carFingerprint == CAR.VOLT or self.CP.carFingerprint == CAR.VOLT_NR:
       return self.get_steer_feedforward_volt

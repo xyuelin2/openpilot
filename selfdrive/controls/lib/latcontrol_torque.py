@@ -43,11 +43,12 @@ class LatControlTorque(LatControl):
     self.friction = CP.lateralTuning.torque.friction
     self.kf = CP.lateralTuning.torque.kf
     self.kf_left_factor = 1. if (CP.lateralTuning.torque.kfLeft <= 0. or self.kf == 0.) else CP.lateralTuning.torque.kfLeft / self.kf
+    self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
+    self.get_steer_feedforward = CI.get_steer_feedforward_function_torque()
 
   def reset(self):
     super().reset()
     self.pid.reset()
-    self.steering_angle_deadzone_deg = self.CP.lateralTuning.torque.steeringAngleDeadzoneDeg
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()

@@ -2,7 +2,6 @@ import math
 
 from cereal import log
 from common.numpy_fast import interp
-from selfdrive.car.interfaces import CarInterfaceBase
 from selfdrive.controls.lib.latcontrol import LatControl, MIN_STEER_SPEED
 from selfdrive.controls.lib.pid import PIDController
 from selfdrive.controls.lib.drive_helpers import apply_deadzone
@@ -44,9 +43,7 @@ class LatControlTorque(LatControl):
     self.friction = CP.lateralTuning.torque.friction
     self.kf = CP.lateralTuning.torque.kf
     self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
-    self.get_steer_feedforward = CI.get_steer_feedforward_function()
-    if self.get_steer_feedforward == CarInterfaceBase.get_steer_feedforward_default:
-      self.get_steer_feedforward = get_steer_feedforward
+    self.get_steer_feedforward = CI.get_steer_feedforward_function_torque()
 
   def update(self, active, CS, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     pid_log = log.ControlsState.LateralTorqueState.new_message()

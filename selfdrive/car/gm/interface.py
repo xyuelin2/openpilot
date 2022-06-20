@@ -39,13 +39,14 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def get_steer_feedforward_silverado(desired_lateral_accel, speed):
-    ANGLE_COEF = 0.32744543
-    ANGLE_COEF2 = 0.05906957
-    SIGMOID_COEF_RIGHT = 0.50000000
-    SIGMOID_COEF_LEFT = 0.60313980
+    ANGLE_COEF = 0.40612450
+    ANGLE_COEF2_RIGHT = 0.07317035
+    ANGLE_COEF2_LEFT = 0.14742903
+    SIGMOID_COEF_RIGHT = 0.35
+    SIGMOID_COEF_LEFT = 0.35
     x = ANGLE_COEF * (desired_lateral_accel) * (40.23 / (max(0.2,speed)))
     sigmoid = erf(x)
-    return ((SIGMOID_COEF_RIGHT if desired_lateral_accel > 0. else SIGMOID_COEF_LEFT) * sigmoid) + ANGLE_COEF2 * desired_lateral_accel
+    return ((SIGMOID_COEF_RIGHT if desired_lateral_accel > 0. else SIGMOID_COEF_LEFT) * sigmoid) + (ANGLE_COEF2_RIGHT if desired_lateral_accel > 0. else ANGLE_COEF2_LEFT) * desired_lateral_accel
 
   def get_steer_feedforward_function_torque(self):
     if self.CP.carFingerprint == CAR.SILVERADO:

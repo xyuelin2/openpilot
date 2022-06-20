@@ -178,8 +178,8 @@ class CarInterface(CarInterfaceBase):
       MAX_LAT_ACCEL = 2.5
       ret.lateralTuning.init('torque')
       ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 1.6 / MAX_LAT_ACCEL
-      ret.lateralTuning.torque.ki = 0.15 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
+      ret.lateralTuning.torque.ki = 0.2 / MAX_LAT_ACCEL
       ret.lateralTuning.torque.kf = 1.0 # for custom ff
 
     elif candidate == CAR.BOLT_EUV:

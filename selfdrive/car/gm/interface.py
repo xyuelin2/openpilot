@@ -46,7 +46,13 @@ class CarInterface(CarInterfaceBase):
     SIGMOID_COEF_LEFT = 0.35
     x = ANGLE_COEF * (desired_lateral_accel) * (40.23 / (max(0.2,speed)))
     sigmoid = erf(x)
-    return ((SIGMOID_COEF_RIGHT if desired_lateral_accel > 0. else SIGMOID_COEF_LEFT) * sigmoid) + (ANGLE_COEF2_RIGHT if desired_lateral_accel > 0. else ANGLE_COEF2_LEFT) * desired_lateral_accel
+    if desired_lateral_accel > 0.:
+      sigmoid_coef = SIGMOID_COEF_RIGHT 
+      slope_coef = ANGLE_COEF2_RIGHT
+    else:
+      sigmoid_coef = SIGMOID_COEF_LEFT
+      slope_coef = ANGLE_COEF2_LEFT
+    return sigmoid_coef * sigmoid + slope_coef * desired_lateral_accel
 
   def get_steer_feedforward_function_torque(self):
     if self.CP.carFingerprint == CAR.SILVERADO:
@@ -59,8 +65,6 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_volt
     elif self.CP.carFingerprint == CAR.ACADIA:
       return self.get_steer_feedforward_acadia
-    elif self.CP.carFingerprint == CAR.SILVERADO:
-      return self.get_steer_feedforward_silverado
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 

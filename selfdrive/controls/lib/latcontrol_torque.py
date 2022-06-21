@@ -21,9 +21,6 @@ from selfdrive.controls.lib.vehicle_model import ACCELERATION_DUE_TO_GRAVITY
 
 FRICTION_THRESHOLD = 0.2
 
-def get_steer_feedforward(desired_lateral_accel, speed):
-  return desired_lateral_accel
-
 def set_torque_tune(tune, MAX_LAT_ACCEL=2.5, FRICTION=0.01, steering_angle_deadzone_deg=0.0):
   tune.init('torque')
   tune.torque.useSteeringAngle = True

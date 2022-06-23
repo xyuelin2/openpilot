@@ -29,9 +29,9 @@ class PIDController():
       # setup derivative gain
       self.d_period = round(derivative_period * rate)
       self.d_period_recip = 1. / self.d_period
-      self.errors = deque(maxlen=self.d_period)
+      self.outputs = deque(maxlen=self.d_period)
     else:
-      self.errors = None
+      self.outputs = None
 
     self.reset()
 
@@ -57,21 +57,20 @@ class PIDController():
     self.d = 0.0
     self.f = 0.0
     self.control = 0
-    if self.errors:
-      self.errors = deque(maxlen=self.d_period)
+    if self.outputs:
+      self.outputs = deque(maxlen=self.d_period)
 
   def update(self, error, error_rate=0.0, speed=0.0, override=False, feedforward=0., freeze_integrator=False):
     self.speed = speed
 
     self.p = float(error) * self.k_p
     self.f = feedforward * self.k_f
-    if self.errors: 
+    if self.outputs: 
       if error_rate == 0.0:
-        self.errors.append(error)
-        if len(self.errors) >= self.d_period:
-          error_rate = (error - self.errors[0]) * self.d_period_recip
+        if len(self.outputs) >= self.d_period:
+          error_rate = (self.outputs[-1] - self.outputs[0]) * self.d_period_recip
       else: # error_rate provided so kill internal error_rate calc
-        self.errors = None
+        self.outputs = None
     self.d = error_rate * self.k_d
 
     if override:
@@ -88,6 +87,9 @@ class PIDController():
         self.i = i
 
     control = self.p + self.i + self.d + self.f
+    
+    if self.outputs is not None:
+      self.outputs.append(control)
 
     self.control = clip(control, self.neg_limit, self.pos_limit)
     return self.control

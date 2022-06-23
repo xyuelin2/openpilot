@@ -55,6 +55,8 @@ void Sound::update() {
     float volume = util::map_val(sm["carState"].getCarState().getVEgo(), 11.f, 20.f, 0.f, 1.0f);
     volume = QAudio::convertVolume(volume, QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale);
     float maxVolume = reduced_volume ? (Hardware::MAX_VOLUME / 2.f): Hardware::MAX_VOLUME;
+    if (maxVolume <= Hardware::MIN_VOLUME)
+      maxVolume = Hardware::MIN_VOLUME;
     volume = util::map_val(volume, 0.f, 1.f, Hardware::MIN_VOLUME, maxVolume);
     for (auto &[s, loops] : sounds) {
       s->setVolume(std::round(100 * volume) / 100);

@@ -12,6 +12,8 @@
 // TODO: detect when we can't play sounds
 // TODO: detect when we can't display the UI
 
+Params p = Params();
+
 Sound::Sound(QObject *parent) : sm({"carState", "controlsState", "deviceState"}) {
   qInfo() << "default audio device: " << QAudioDeviceInfo::defaultOutputDevice().deviceName();
 
@@ -47,11 +49,13 @@ void Sound::update() {
     return;
   }
 
+  bool reduced_volume = p.getBool("LowerSoundVolume");
   // scale volume with speed
   if (sm.updated("carState")) {
     float volume = util::map_val(sm["carState"].getCarState().getVEgo(), 11.f, 20.f, 0.f, 1.0f);
     volume = QAudio::convertVolume(volume, QAudio::LogarithmicVolumeScale, QAudio::LinearVolumeScale);
-    volume = util::map_val(volume, 0.f, 1.f, Hardware::MIN_VOLUME, Hardware::MAX_VOLUME);
+    float maxVolume = reduced_volume ? (Hardware::MAX_VOLUME / 2.f): Hardware::MAX_VOLUME;
+    volume = util::map_val(volume, 0.f, 1.f, Hardware::MIN_VOLUME, maxVolume);
     for (auto &[s, loops] : sounds) {
       s->setVolume(std::round(100 * volume) / 100);
     }

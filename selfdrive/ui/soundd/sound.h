@@ -4,6 +4,7 @@
 
 #include "system/hardware/hw.h"
 #include "selfdrive/ui/ui.h"
+#include "common/params.h"
 
 const std::tuple<AudibleAlert, QString, int> sound_list[] = {
   // AudibleAlert, file name, loop count

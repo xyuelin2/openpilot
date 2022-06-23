@@ -69,6 +69,12 @@ TogglesPanel::TogglesPanel(SettingsWindow *parent) : ListWidget(parent) {
       "When enabled, pressing the accelerator pedal will disengage openpilot.",
       "../assets/offroad/icon_disengage_on_accelerator.svg",
     },
+    {
+      "LowerSoundVolume",
+      "Reduce Alert Volume",
+      "When enabled, non-critical alert volume is reduced.",
+      "../assets/offroad/icon_warning.svg",
+    },
 #ifdef ENABLE_MAPS
     {
       "NavSettingTime24h",

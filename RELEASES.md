@@ -1,8 +1,12 @@
-Version 0.8.15-GM-0.0.11 (2022-05-26)
+Version 0.8.15-GM-0.0.15 (2022-06-18)
 ========================
- * Latest from commaai/master as of 4pm (2022-04-26T20:00:00.000Z)
- * Comma removed Comma 2 support from master; C2 will get backported featured in the future
- * Further improved Bolt Tunining thanks to Darknight11
+ * Restored laneless toggle
+ * L-mode handling added for EVs, retuned with a prelim tune
+ * Tightnend up dbc config for interceptor (on Bolt*)
+ * WIP - updating dbc messages involving AEB
+ * Now using self-built PlutJuggler, meaning we can use it with our customized dbc files prior to upstream
+ * Latest from commaai/master as of 7:48 pm
+ * Further improved Bolt Tuning thanks to Darknight11
  * Reversed CC main logic with Pedal
  * CarState.gearShifter now more detailed, includes L mode!
    Supports following GearShifter enum vals from cereal
@@ -17,21 +21,34 @@ Version 0.8.15-GM-0.0.11 (2022-05-26)
  * Chevy Bolt EV Support (And several others)
  * Non-ASCM (aka non-radar) GM support
  * GM longitudinal support using Pedal Interceptor (no braking on non-EV)
- * ~~Grey & White Panda Support restored~~
  * WARNING: Pedal firmware is GM specific
  * Silverado with Cam ACC passthrough
  * Suburban & Tahoe with self-contained ACC
  * Robust and efficient camera detection for forwarding on Panda
  * DBC groundwork for friction braking and AEB on PT
- * ~~Reworked GM values.py with capability for conditional limits~~
- * ~~Panda now supports multiple limit profiles through safety_param~~
  * Cleaned up radar settings
  * TODO: Pedal transform values configurable, store in flash
  * TODO: Pedal low-speed tuning
  * TODO: Auto-detection of L-mode zero-point
 
-Version 0.8.15 (20XX-XX-XX)
+Version 0.8.15 (2022-XX-XX)
 ========================
+* New driving model
+* New lateral controller based on physical wheel torque model
+  * Much smoother control, consistent across the speed range
+  * Effective feedforward that uses road roll
+  * Simplified tuning, all car-specific parameters can be derived from data
+  * Significantly improved control on TSS-P Prius
+* New driver monitoring model
+  * takes a larger input frame
+  * outputs a driver state for both driver and passenger
+  * automatically determines which side the driver is on (soon)
+* Display speed limit while navigating
+* Reduced power usage: device runs cooler and fan spins less
+* AGNOS 5
+* Honda Civic 2022 support
+* Hyundai Tucson 2021 support thanks to bluesforte!
+* Lexus NX Hybrid 2020 support thanks to AlexandreSato!
 
 Version 0.8.14 (2022-06-01)
 ========================

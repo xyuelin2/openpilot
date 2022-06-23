@@ -4,8 +4,8 @@ from typing import Optional
 from cereal import log
 from common.params import Params, put_nonblocking
 from common.realtime import sec_since_boot
-from selfdrive.hardware import HARDWARE
-from selfdrive.swaglog import cloudlog
+from system.hardware import HARDWARE
+from system.swaglog import cloudlog
 from selfdrive.statsd import statlog
 
 CAR_VOLTAGE_LOW_PASS_K = 0.091 # LPF gain for 5s tau (dt/tau / (dt/tau + 1))
@@ -18,7 +18,7 @@ CAR_CHARGING_RATE_W = 45
 VBATT_PAUSE_CHARGING = 11.0           # Lower limit on the LPF car battery voltage
 VBATT_INSTANT_PAUSE_CHARGING = 7.0    # Lower limit on the instant car battery voltage measurements to avoid triggering on instant power loss
 MAX_TIME_OFFROAD_S = 30*3600
-MIN_ON_TIME_S = 3600
+MIN_ON_TIME_S = 30*3600 # TODO: JJS Revert - for debugging. 30 hours instead of one
 
 class PowerMonitoring:
   def __init__(self):

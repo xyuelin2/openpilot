@@ -481,14 +481,22 @@ class CarInterface(CarInterfaceBase):
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.centerToFront = ret.wheelbase * .49
       ret.steerActuatorDelay = 0.11
-      ret.lateralTuning.pid.kpBP = [15., 31.]
-      ret.lateralTuning.pid.kpV = [0.10, 0.16]
-      ret.lateralTuning.pid.kiBP = [0., 31.]
-      ret.lateralTuning.pid.kiV = [0.0001, 0.0002]
-      ret.lateralTuning.pid.kdBP = [0.]
-      ret.lateralTuning.pid.kdV = [0.01]
-      ret.lateralTuning.pid.kf = .6 # when turning right. use with get_steer_feedforward_silverado()
-      ret.lateralTuning.pid.kfLeft = .4 #  when turning left. use with get_steer_feedforward_silverado()
+      if (Params().get_bool("LateralTorqueControl")):
+        MAX_LAT_ACCEL = 2.5
+        ret.lateralTuning.init('torque')
+        ret.lateralTuning.torque.useSteeringAngle = True
+        ret.lateralTuning.torque.kp = 2.0 / MAX_LAT_ACCEL
+        ret.lateralTuning.torque.ki = 0.2 / MAX_LAT_ACCEL
+        ret.lateralTuning.torque.kf = 1.0 # for custom ff
+      else:
+        ret.lateralTuning.pid.kpBP = [15., 31.]
+        ret.lateralTuning.pid.kpV = [0.10, 0.16]
+        ret.lateralTuning.pid.kiBP = [0., 31.]
+        ret.lateralTuning.pid.kiV = [0.0001, 0.0002]
+        ret.lateralTuning.pid.kdBP = [0.]
+        ret.lateralTuning.pid.kdV = [0.01]
+        ret.lateralTuning.pid.kf = .6 # when turning right. use with get_steer_feedforward_silverado()
+        ret.lateralTuning.pid.kfLeft = .4 #  when turning left. use with get_steer_feedforward_silverado()
 
     elif candidate == CAR.SUBURBAN:
       ret.minEnableSpeed = -1. # engage speed is decided by pcmFalse

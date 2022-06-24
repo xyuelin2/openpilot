@@ -164,6 +164,8 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_silverado_torque
     elif self.CP.carFingerprint == CAR.VOLT or self.CP.carFingerprint == CAR.VOLT_NR:
       return self.get_steer_feedforward_volt_torque
+    elif self.CP.carFingerprint == CAR.BOLT_NR:
+      return self.get_steer_feedforward_bolt_torque
     else:
       return CarInterfaceBase.get_steer_feedforward_torque_default
   

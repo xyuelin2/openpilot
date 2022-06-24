@@ -141,7 +141,7 @@ class CarInterface(CarInterfaceBase):
   
   # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
-  def get_steer_feedforward_tahoe(desired_lateral_accel, v_ego):
+  def get_steer_feedforward_tahoe_torque(desired_lateral_accel, v_ego):
     ANGLE_COEF = -0.53345154
     ANGLE_OFFSET = 0.
     SPEED_OFFSET = 0.
@@ -166,6 +166,8 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_volt_torque
     elif self.CP.carFingerprint == CAR.BOLT_NR:
       return self.get_steer_feedforward_bolt_torque
+    elif self.CP.carFingerprint == CAR.TAHOE_NR:
+      return self.get_steer_feedforward_tahoe_torque
     else:
       return CarInterfaceBase.get_steer_feedforward_torque_default
   
@@ -182,8 +184,6 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_silverado
     elif self.CP.carFingerprint == CAR.SUBURBAN:
       return self.get_steer_feedforward_suburban
-    elif self.CP.carFingerprint == CAR.TAHOE_NR:
-      return self.get_steer_feedforward_tahoe
     else:
       return CarInterfaceBase.get_steer_feedforward_default
 

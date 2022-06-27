@@ -98,20 +98,16 @@ class CarInterface(CarInterfaceBase):
   
   @staticmethod
   def get_steer_feedforward_bolt_torque(desired_lateral_accel, speed):
-    ANGLE_COEF = 1.03375407
-    ANGLE_COEF2_RIGHT = 0.27660389
-    ANGLE_COEF2_LEFT = 0.14851400
-    SIGMOID_COEF_RIGHT = 0.30000000
-    SIGMOID_COEF_LEFT = 0.66805811
-    x = ANGLE_COEF * (desired_lateral_accel) * (40.23 / (max(0.2,speed)))
+    ANGLE_COEF = 0.18708832
+    ANGLE_COEF2 = 0.28818528
+    ANGLE_OFFSET = 0.21370785
+    SPEED_OFFSET = 20.00000000
+    SIGMOID_COEF_RIGHT = 0.36997215
+    SIGMOID_COEF_LEFT = 0.43181054
+    SPEED_COEF = 0.34143006
+    x = ANGLE_COEF * (desired_lateral_accel + ANGLE_OFFSET) * (40.23 / (max(0.05,speed + SPEED_OFFSET))**SPEED_COEF)
     sigmoid = erf(x)
-    if desired_lateral_accel < 0.:
-      sigmoid_coef = SIGMOID_COEF_RIGHT 
-      slope_coef = ANGLE_COEF2_RIGHT
-    else:
-      sigmoid_coef = SIGMOID_COEF_LEFT
-      slope_coef = ANGLE_COEF2_LEFT
-    return sigmoid_coef * sigmoid + slope_coef * desired_lateral_accel
+    return ((SIGMOID_COEF_RIGHT if (desired_lateral_accel + ANGLE_OFFSET) < 0. else SIGMOID_COEF_LEFT) * sigmoid) + ANGLE_COEF2 * (desired_lateral_accel + ANGLE_OFFSET)
   
   @staticmethod
   def get_steer_feedforward_silverado(desired_angle, v_ego):

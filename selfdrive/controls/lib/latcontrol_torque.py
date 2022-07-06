@@ -68,7 +68,7 @@ class LatControlTorque(LatControl):
       desired_lateral_accel = desired_curvature * CS.vEgo ** 2
 
       # desired rate is the desired rate of change in the setpoint, not the absolute desired curvature
-      #desired_lateral_jerk = desired_curvature_rate * CS.vEgo ** 2
+      desired_lateral_jerk = desired_curvature_rate * CS.vEgo ** 2
       actual_lateral_accel = actual_curvature * CS.vEgo ** 2
       lateral_accel_deadzone = curvature_deadzone * CS.vEgo ** 2
 
@@ -81,8 +81,8 @@ class LatControlTorque(LatControl):
 
       ff = self.get_steer_feedforward(desired_lateral_accel - params.roll * ACCELERATION_DUE_TO_GRAVITY, CS.vEgo)
       # convert friction into lateral accel units for feedforward
-      friction_compensation = interp(error, [-FRICTION_THRESHOLD, FRICTION_THRESHOLD], [-self.friction, self.friction])
-      ff += friction_compensation / self.kf
+      friction_compensation = interp(desired_lateral_jerk, [-FRICTION_THRESHOLD, FRICTION_THRESHOLD], [-self.friction, self.friction])
+      ff += friction_compensation #/ self.kf
       # switch to left feedforward (negative curvature)
       if desired_curvature < 0.:
         ff *= self.kf_left_factor

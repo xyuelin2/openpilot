@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from cereal import car
-from math import fabs, erf, atan
+from math import fabs, erf, atan, cos
 
 from common.conversions import Conversions as CV
+from common.numpy_fast import clip
 from common.params import Params
 from selfdrive.car import STD_CARGO_KG, create_button_enable_events, create_button_event, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
 from selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, NO_ASCM
@@ -14,6 +15,7 @@ GearShifter = car.CarState.GearShifter
 BUTTONS_DICT = {CruiseButtons.RES_ACCEL: ButtonType.accelCruise, CruiseButtons.DECEL_SET: ButtonType.decelCruise,
                 CruiseButtons.MAIN: ButtonType.altButton3, CruiseButtons.CANCEL: ButtonType.cancel}
 
+PI = 3.14159
 
 # meant for traditional ff fits
 def get_steer_feedforward_sigmoid1(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
@@ -147,13 +149,37 @@ class CarInterface(CarInterfaceBase):
     return get_steer_feedforward_erf(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF)
   
   @staticmethod
-  def get_steer_feedforward_suburban(desired_angle, v_ego):
-    ANGLE = 0.06562376600261893
-    ANGLE_OFFSET = 0.#-2.656819831714162
-    SIGMOID_SPEED = 0.04648878299738527
-    SIGMOID = 0.21826990273744493
-    SPEED = -0.001355528078762762
-    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+  def get_steer_feedforward_suburban(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
+    ANGLE_COEF = 0.90168740
+    ANGLE_COEF2 = 0.37850928
+    ANGLE_OFFSET = -3.02370131
+    SPEED_OFFSET = 0.00000000
+    SIGMOID_COEF_RIGHT = 0.34018316
+    SIGMOID_COEF_LEFT = 0.38395898
+    SPEED_COEF = 0.03309914
+    
+    x = ANGLE_COEF * (angle + ANGLE_OFFSET)
+    sigmoid = x / (1. + fabs(x))
+    return ((SIGMOID_COEF_RIGHT if (angle + ANGLE_OFFSET) > 0. else SIGMOID_COEF_LEFT) * sigmoid) * ((speed + SPEED_OFFSET) * SPEED_COEF) * ((fabs(angle + ANGLE_OFFSET) ** fabs(ANGLE_COEF2)))
+  
+  @staticmethod
+  def get_steer_feedforward_suburban_torque(desired_lateral_accel, speed):
+    ANGLE_COEF = 0.66897758
+    ANGLE_COEF2 = 0.01000000
+    ANGLE_OFFSET = -0.44029828
+    SPEED_OFFSET = 2.31755298
+    SIGMOID_COEF_RIGHT = 0.35709901
+    SIGMOID_COEF_LEFT = 0.36136769
+    SPEED_COEF = 0.13870482
+    
+    x = ANGLE_COEF * (desired_lateral_accel + ANGLE_OFFSET)
+    sigmoid = x / (1. + fabs(x))
+    
+    linear = desired_lateral_accel
+    max_speed = 26.
+    speed_norm = 0.5 * cos(clip(speed / max_speed, 0., 1.) * PI) + 0.5
+    
+    return (speed_norm) * linear + (1-speed_norm) * (((SIGMOID_COEF_RIGHT if (desired_lateral_accel + ANGLE_OFFSET) > 0. else SIGMOID_COEF_LEFT) * sigmoid) * ((speed + SPEED_OFFSET) * SPEED_COEF) * ((fabs(desired_lateral_accel + ANGLE_OFFSET) ** fabs(ANGLE_COEF2))))
 
   def get_steer_feedforward_function_torque(self):
     if self.CP.carFingerprint == CAR.SILVERADO_NR:
@@ -164,6 +190,8 @@ class CarInterface(CarInterfaceBase):
       return self.get_steer_feedforward_bolt_torque
     elif self.CP.carFingerprint == CAR.TAHOE_NR:
       return self.get_steer_feedforward_tahoe_torque
+    elif self.CP.carFingerprint == CAR.SUBURBAN:
+      return self.get_steer_feedforward_suburban_torque
     else:
       return CarInterfaceBase.get_steer_feedforward_torque_default
   
@@ -507,15 +535,25 @@ class CarInterface(CarInterfaceBase):
       ret.radarOffCan = True # ASCM vehicles (typically) have radar
       
       ret.steerActuatorDelay = 0.253 # Per Jason Young - I got 0.074
-      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19], [0.02, 0.12]]
-      ret.lateralTuning.pid.kpBP = [10., 41.]
-      ret.lateralTuning.pid.kpV = [0.11, 0.19]
-      ret.lateralTuning.pid.kiBP = [10., 41.]
-      ret.lateralTuning.pid.kiV = [0.02, 0.12]
-      ret.lateralTuning.pid.kdBP = [0.]
-      ret.lateralTuning.pid.kdV = [0.6]
-      ret.lateralTuning.pid.kf = 1.0
+      if (Params().get_bool("LateralTorqueControl")):
+        max_lateral_accel = 2.5
+        ret.lateralTuning.init('torque')
+        ret.lateralTuning.torque.useSteeringAngle = True
+        ret.lateralTuning.torque.kp = 2.0 / max_lateral_accel
+        ret.lateralTuning.torque.ki = 0.6 / max_lateral_accel
+        ret.lateralTuning.torque.kd = 4.0 / max_lateral_accel
+        ret.lateralTuning.torque.kf = 1.0 # use with custom torque ff
+        ret.lateralTuning.torque.friction = 0.005
+      else:
+        ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
+        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.11, 0.19], [0.02, 0.12]]
+        ret.lateralTuning.pid.kpBP = [10., 41.]
+        ret.lateralTuning.pid.kpV = [0.11, 0.19]
+        ret.lateralTuning.pid.kiBP = [10., 41.]
+        ret.lateralTuning.pid.kiV = [0.02, 0.12]
+        ret.lateralTuning.pid.kdBP = [0.]
+        ret.lateralTuning.pid.kdV = [0.6]
+        ret.lateralTuning.pid.kf = 1.0
       ret.steerLimitTimer = 0.5
       # ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13, 0.24], [0.01, 0.06]]

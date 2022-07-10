@@ -149,7 +149,7 @@ class CarInterface(CarInterfaceBase):
     return get_steer_feedforward_erf(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF)
   
   @staticmethod
-  def get_steer_feedforward_suburban(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
+  def get_steer_feedforward_suburban(angle, speed):
     ANGLE_COEF = 0.90168740
     ANGLE_COEF2 = 0.37850928
     ANGLE_OFFSET = -3.02370131

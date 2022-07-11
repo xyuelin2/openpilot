@@ -84,7 +84,7 @@ class CarInterface(CarInterfaceBase):
   def get_steer_feedforward_bolt_euv(angle, speed):
     ANGLE_COEF = 4.80745391
     ANGLE_COEF2 = 0.47214969
-    ANGLE_OFFSET = -0.32202861
+    ANGLE_OFFSET = 0.#-0.32202861
     SPEED_OFFSET = 2.85629120
     SIGMOID_COEF_RIGHT = 0.33536781
     SIGMOID_COEF_LEFT = 0.40555956
@@ -98,7 +98,7 @@ class CarInterface(CarInterfaceBase):
   def get_steer_feedforward_bolt_euv_torque(desired_lateral_accel, speed):
     ANGLE_COEF = 0.16179233
     ANGLE_COEF2 = 0.20691964
-    ANGLE_OFFSET = 0.04420955
+    ANGLE_OFFSET = 0.#0.04420955
     SPEED_OFFSET = -7.94958973
     SIGMOID_COEF_RIGHT = 0.34906506
     SIGMOID_COEF_LEFT = 0.20000000
@@ -171,7 +171,7 @@ class CarInterface(CarInterfaceBase):
   def get_steer_feedforward_suburban(angle, speed):
     ANGLE_COEF = 0.90168740
     ANGLE_COEF2 = 0.37850928
-    ANGLE_OFFSET = -3.02370131
+    ANGLE_OFFSET = 0.#-3.02370131
     SPEED_OFFSET = 0.00000000
     SIGMOID_COEF_RIGHT = 0.34018316
     SIGMOID_COEF_LEFT = 0.38395898
@@ -185,7 +185,7 @@ class CarInterface(CarInterfaceBase):
   def get_steer_feedforward_suburban_torque(desired_lateral_accel, speed):
     ANGLE_COEF = 0.66897758
     ANGLE_COEF2 = 0.01000000
-    ANGLE_OFFSET = -0.44029828
+    ANGLE_OFFSET = 0.#-0.44029828
     SPEED_OFFSET = 2.31755298
     SIGMOID_COEF_RIGHT = 0.35709901
     SIGMOID_COEF_LEFT = 0.36136769

@@ -71,7 +71,7 @@ class PIDController():
           error_rate = (self.outputs[-1] - self.outputs[0]) * self.d_period_recip
       else: # error_rate provided so kill internal error_rate calc
         self.outputs = None
-    self.d = error_rate * self.k_d
+    self.d = clip(error_rate * self.k_d, -abs(self.p), abs(self.p))
 
     if override:
       self.i -= self.i_unwind_rate * float(np.sign(self.i))

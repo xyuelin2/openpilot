@@ -1,11 +1,11 @@
 from cereal import car
 from common.conversions import Conversions as CV
-from common.realtime import DT_CTRL
 from common.numpy_fast import interp, clip
+from common.realtime import DT_CTRL
 from opendbc.can.packer import CANPacker
 from selfdrive.car import apply_std_steer_torque_limits, create_gas_interceptor_command2
 from selfdrive.car.gm import gmcan
-from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams, EV_CAR
+from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams
 import math
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -27,10 +27,14 @@ def actuator_hystereses(final_pedal, pedal_steady):
 
   return final_pedal, pedal_steady
 
+NetworkLocation = car.CarParams.NetworkLocation
+TransmissionType = car.CarParams.TransmissionType
+
 
 class CarController:
   def __init__(self, dbc_name, CP, VM):
     self.pedal_steady = 0.
+    self.CP = CP
     self.start_time = 0.
     self.apply_steer_last = 0
     self.apply_gas = 0
@@ -39,14 +43,13 @@ class CarController:
 
     self.lka_steering_cmd_counter_last = -1
     self.lka_icon_status_last = (False, False)
-    self.steer_rate_limited = False
 
     self.params = CarControllerParams()
 
-    self.packer_pt = CANPacker(DBC[CP.carFingerprint]['pt'])
-    self.packer_obj = CANPacker(DBC[CP.carFingerprint]['radar'])
-    self.packer_ch = CANPacker(DBC[CP.carFingerprint]['chassis'])
-    self.packer_body = CANPacker(DBC[CP.carFingerprint]['body'])
+    self.packer_pt = CANPacker(DBC[self.CP.carFingerprint]['pt'])
+    self.packer_obj = CANPacker(DBC[self.CP.carFingerprint]['radar'])
+    self.packer_ch = CANPacker(DBC[self.CP.carFingerprint]['chassis'])
+    self.packer_body = CANPacker(DBC[self.CP.carFingerprint]['body'])
 
   def update(self, CC, CS):
     actuators = CC.actuators
@@ -69,7 +72,6 @@ class CarController:
       if lkas_enabled:
         new_steer = int(round(actuators.steer * self.params.STEER_MAX))
         apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, self.params)
-        self.steer_rate_limited = new_steer != apply_steer
       else:
         apply_steer = 0
 
@@ -81,7 +83,7 @@ class CarController:
       can_sends.append(gmcan.create_steering_control(self.packer_pt, CanBus.POWERTRAIN, apply_steer, idx, lkas_enabled))
 
     # TODO: All three conditions should not be required - really only last two?
-    if CS.CP.carFingerprint not in NO_ASCM and CS.CP.openpilotLongitudinalControl and not CS.CP.pcmCruise:
+    if self.CP.carFingerprint not in NO_ASCM and self.CP.openpilotLongitudinalControl and not self.CP.pcmCruise:
       # Gas/regen and brakes - all at 25Hz
       if (self.frame % 4) == 0:
         if not CC.longActive:
@@ -143,7 +145,7 @@ class CarController:
         
         if CS.CP.enableGasInterceptor:
           # #TODO: Add alert when not in L mode re: limited braking
-          singlePedalMode = CS.out.gearShifter == GearShifter.low and CS.CP.carFingerprint in EV_CAR
+          singlePedalMode = CS.out.gearShifter == GearShifter.low and self.CP.transmissionType == TransmissionType.automatic
           # TODO: JJS Detect saturated battery?
           if singlePedalMode:
             # In L Mode, Pedal applies regen at a fixed coast-point (TODO: max regen in L mode may be different per car)
@@ -191,7 +193,7 @@ class CarController:
     lka_active = CS.lkas_status == 1
     lka_critical = lka_active and abs(actuators.steer) > 0.9
     lka_icon_status = (lka_active, lka_critical)
-    if self.frame % self.params.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last:
+    if self.CP.networkLocation != NetworkLocation.fwdCamera and (self.frame % self.params.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last):
       steer_alert = hud_alert in (VisualAlert.steerRequired, VisualAlert.ldw)
       can_sends.append(gmcan.create_lka_icon_command(CanBus.SW_GMLAN, lka_active, lka_critical, steer_alert))
       self.lka_icon_status_last = lka_icon_status

@@ -12,6 +12,8 @@ from selfdrive.car.interfaces import CarInterfaceBase
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
+TransmissionType = car.CarParams.TransmissionType
+NetworkLocation = car.CarParams.NetworkLocation
 BUTTONS_DICT = {CruiseButtons.RES_ACCEL: ButtonType.accelCruise, CruiseButtons.DECEL_SET: ButtonType.decelCruise,
                 CruiseButtons.MAIN: ButtonType.altButton3, CruiseButtons.CANCEL: ButtonType.cancel}
 
@@ -236,10 +238,11 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
-    ret.alternativeExperience = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS
-    ret.pcmCruise = False  # stock cruise control is kept off
-    ret.openpilotLongitudinalControl = True # ASCM vehicles use OP for long
-    ret.radarOffCan = False # ASCM vehicles (typically) have radar
+    ret.pcmCruise = False  # For ASCM, stock non-adaptive cruise control is kept off
+    ret.radarOffCan = False  # For ASCM, radar exists
+    ret.transmissionType = TransmissionType.automatic
+    # NetworkLocation.gateway: OBD-II harness (typically ASCM), NetworkLocation.fwdCamera: non-ASCM
+    ret.networkLocation = NetworkLocation.gateway
 
     # These cars have been put into dashcam only due to both a lack of users and test coverage.
     # These cars likely still work fine. Once a user confirms each car works and a test route is
@@ -317,6 +320,7 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatioRear = 0.
       ret.centerToFront = 0.45 * ret.wheelbase # from Volt Gen 1
       ret.steerActuatorDelay = 0.18
+      ret.transmissionType = TransmissionType.direct
       if (Params().get_bool("LateralTorqueControl")):
         max_lateral_accel = 3.0
         ret.lateralTuning.init('torque')
@@ -336,6 +340,7 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kf = 1. # !!! ONLY for sigmoid feedforward !!!
 
       if ret.enableGasInterceptor:
+        ret.minEnableSpeed = -1
         #Note: Low speed, stop and go not tested. Should be fairly smooth on highway
         ret.longitudinalTuning.kpBP = [0., 35.0]
         ret.longitudinalTuning.kpV = [0.4, 0.06] 
@@ -630,8 +635,6 @@ class CarInterface(CarInterfaceBase):
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_loopback, self.cp_body)
 
-    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
-
     if self.CS.cruise_buttons != self.CS.prev_cruise_buttons and self.CS.prev_cruise_buttons != CruiseButtons.INIT:
       be = create_button_event(self.CS.cruise_buttons, self.CS.prev_cruise_buttons, BUTTONS_DICT, CruiseButtons.UNPRESS)
 
@@ -681,5 +684,4 @@ class CarInterface(CarInterfaceBase):
     return ret
 
   def apply(self, c):
-    ret = self.CC.update(c, self.CS)
-    return ret
+    return self.CC.update(c, self.CS)

@@ -36,9 +36,9 @@ class CarControllerParams:
   ACCEL_MIN = -4. # m/s^2
 
   MAX_ACC_REGEN = 1404  # Max ACC regen is slightly less than max paddle regen
-  GAS_LOOKUP_BP = [-1., 0., ACCEL_MAX]
+  GAS_LOOKUP_BP = [-1.1, 0., ACCEL_MAX]
   GAS_LOOKUP_V = [MAX_ACC_REGEN, ZERO_GAS, MAX_GAS]
-  BRAKE_LOOKUP_BP = [ACCEL_MIN, -1.]
+  BRAKE_LOOKUP_BP = [ACCEL_MIN, -1.1]
   BRAKE_LOOKUP_V = [MAX_BRAKE, 0.]
 
 STEER_THRESHOLD = 1.0

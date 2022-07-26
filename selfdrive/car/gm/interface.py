@@ -21,15 +21,15 @@ PI = 3.14159
 def get_steer_feedforward_sigmoid1(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
   x = ANGLE_COEF * (angle) / max(0.01,speed)
   sigmoid = x / (1. + fabs(x))
-  return ((SIGMOID_COEF_RIGHT if angle > 0. else SIGMOID_COEF_LEFT) * sigmoid) * (0.01 + speed + SPEED_OFFSET) ** ANGLE_COEF2 + ANGLE_OFFSET * (angle * 0.05 - atan(angle * 0.05))
+  return ((SIGMOID_COEF_RIGHT if angle > 0. else SIGMOID_COEF_LEFT) * sigmoid) * (0.01 + speed + SPEED_OFFSET) ** ANGLE_COEF2 + ANGLE_OFFSET * (angle * SPEED_COEF - atan(angle * SPEED_COEF))
 
 # meant for torque fits
-def get_steer_feedforward_erf1(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
+def get_steer_feedforward_erf(angle, speed, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF):
   x = ANGLE_COEF * (angle) * (40.23 / (max(0.05,speed + SPEED_OFFSET))**SPEED_COEF)
   sigmoid = erf(x)
   return ((SIGMOID_COEF_RIGHT if angle < 0. else SIGMOID_COEF_LEFT) * sigmoid) + ANGLE_COEF2 * angle
 
-def get_steer_feedforward_erf(angle, speed, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF):
+def get_steer_feedforward_erf1(angle, speed, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF):
   x = ANGLE_COEF * (angle + ANGLE_OFFSET)
   sigmoid = erf(x)
   return (SIGMOID_COEF * sigmoid) / (max(speed - SPEED_OFFSET, 0.1) * SPEED_COEF)**SPEED_POWER
@@ -45,29 +45,28 @@ class CarInterface(CarInterfaceBase):
     params = CarControllerParams()
     return params.ACCEL_MIN, params.ACCEL_MAX
   
-  # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
   def get_steer_feedforward_volt(desired_angle, v_ego):
-    ANGLE_COEF = 0.90933154
-    ANGLE_COEF2 = 1.99999999
-    ANGLE_OFFSET = 0.12278091
-    SPEED_OFFSET = 8.14335061
-    SIGMOID_COEF_RIGHT = 0.00219725
-    SIGMOID_COEF_LEFT = 0.00202376
-    SPEED_COEF = 0.
+    ANGLE_COEF = 1.23514093
+    ANGLE_COEF2 = 2.00000000
+    ANGLE_OFFSET = 0.03891270
+    SPEED_OFFSET = 8.58272983
+    SIGMOID_COEF_RIGHT = 0.00154548
+    SIGMOID_COEF_LEFT = 0.00168327
+    SPEED_COEF = 0.16283995
     return get_steer_feedforward_sigmoid1(desired_angle, v_ego, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF)
   
   # Volt determined by iteratively plotting and minimizing error for f(angle, speed) = steer.
   @staticmethod
   def get_steer_feedforward_volt_torque(desired_lateral_accel, v_ego):
-    ANGLE_COEF = 0.09096546
-    ANGLE_COEF2 = 0.12402084
-    ANGLE_OFFSET = 0.
-    SPEED_OFFSET = -3.35899817
-    SIGMOID_COEF_RIGHT = 0.48819415
-    SIGMOID_COEF_LEFT = 0.55110842
-    SPEED_COEF = 0.57397696
-    return get_steer_feedforward_erf1(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF)
+    ANGLE_COEF = 0.10000000
+    ANGLE_COEF2 = 0.13609369
+    ANGLE_OFFSET = 0.00215830
+    SPEED_OFFSET = -3.40740140
+    SIGMOID_COEF_RIGHT = 0.54324908
+    SIGMOID_COEF_LEFT = 0.48109872
+    SPEED_COEF = 0.59589789
+    return get_steer_feedforward_erf(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_COEF2, ANGLE_OFFSET, SPEED_OFFSET, SIGMOID_COEF_RIGHT, SIGMOID_COEF_LEFT, SPEED_COEF)
   
 
 
@@ -165,7 +164,7 @@ class CarInterface(CarInterfaceBase):
     SPEED_POWER = 1.
     SIGMOID_COEF = 17.81939495
     SPEED_COEF = -0.47166994
-    return get_steer_feedforward_erf(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF)
+    return get_steer_feedforward_erf1(desired_lateral_accel, v_ego, ANGLE_COEF, ANGLE_OFFSET, SPEED_OFFSET, SPEED_POWER, SIGMOID_COEF, SPEED_COEF)
   
   @staticmethod
   def get_steer_feedforward_suburban(angle, speed):
@@ -351,11 +350,11 @@ class CarInterface(CarInterfaceBase):
       else:
         # Only tuned to reduce oscillations. TODO.
         ret.longitudinalTuning.kpBP = [5., 15., 35.]
-        ret.longitudinalTuning.kpV = [1.25, 1.6, 1.3]
+        ret.longitudinalTuning.kpV = [1.32, 1.6, 1.3]
         ret.longitudinalTuning.kiBP = [5., 15., 35.]
-        ret.longitudinalTuning.kiV = [0.18, 0.31, 0.34]
+        ret.longitudinalTuning.kiV = [0.17, 0.31, 0.34]
         ret.longitudinalTuning.kdBP = [5., 25.]
-        ret.longitudinalTuning.kdV = [0.6, 0.0]
+        ret.longitudinalTuning.kdV = [0.65, 0.0]
 
     elif candidate == CAR.MALIBU or candidate == CAR.MALIBU_NR:
       ret.mass = 1496. + STD_CARGO_KG

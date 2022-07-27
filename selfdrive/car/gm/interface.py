@@ -322,8 +322,8 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.init('torque')
         ret.lateralTuning.torque.useSteeringAngle = True
         ret.lateralTuning.torque.kp = 1.8 / max_lateral_accel
-        ret.lateralTuning.torque.ki = 0.6 / max_lateral_accel
-        ret.lateralTuning.torque.kd = 4.0 / max_lateral_accel
+        ret.lateralTuning.torque.ki = 0.5 / max_lateral_accel
+        ret.lateralTuning.torque.kd = 5.0 / max_lateral_accel
         ret.lateralTuning.torque.kf = 1.0 # use with custom torque ff
         ret.lateralTuning.torque.friction = 0.005
       else:
@@ -332,7 +332,7 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kiBP = [0., 40.]
         ret.lateralTuning.pid.kiV = [.015, 0.02]
         ret.lateralTuning.pid.kdBP = [0.]
-        ret.lateralTuning.pid.kdV = [0.6]
+        ret.lateralTuning.pid.kdV = [0.7]
         ret.lateralTuning.pid.kf = 1. # !!! ONLY for sigmoid feedforward !!!
 
       if ret.enableGasInterceptor:

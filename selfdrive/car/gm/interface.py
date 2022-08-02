@@ -92,25 +92,29 @@ class CarInterface(CarInterfaceBase):
   
   @staticmethod
   def get_steer_feedforward_bolt(desired_angle, v_ego):
-    ANGLE = 0.06370624896135679
-    ANGLE_OFFSET = 0.#32536345911579184
-    SIGMOID_SPEED = 0.06479105208670367
-    SIGMOID = 0.34485246691603205
-    SPEED = -0.0010645479469461995
-    return get_steer_feedforward_sigmoid(desired_angle, v_ego, ANGLE, ANGLE_OFFSET, SIGMOID_SPEED, SIGMOID, SPEED)
+    ANGLE_COEF = 0.90197014
+    ANGLE_COEF2 = 0.35867166
+    ANGLE_OFFSET = 0.#69029483
+    SPEED_OFFSET = 10.93210374
+    SIGMOID_COEF_RIGHT = 0.16006602
+    SIGMOID_COEF_LEFT = 0.13780659
+    SPEED_COEF = 0.07925358
+    x = ANGLE_COEF * (angle + ANGLE_OFFSET)
+    sigmoid = x / (1. + fabs(x))
+    return ((SIGMOID_COEF_RIGHT if (angle + ANGLE_OFFSET) > 0. else SIGMOID_COEF_LEFT) * sigmoid) * ((speed + SPEED_OFFSET) * SPEED_COEF) * ((fabs(angle + ANGLE_OFFSET) ** fabs(ANGLE_COEF2)))
   
   @staticmethod
   def get_steer_feedforward_bolt_torque(desired_lateral_accel, speed):
-    ANGLE_COEF = 0.18708832
-    ANGLE_COEF2 = 0.28818528
-    ANGLE_OFFSET = 0.#21370785
-    SPEED_OFFSET = 20.00000000
-    SIGMOID_COEF_RIGHT = 0.36997215
-    SIGMOID_COEF_LEFT = 0.43181054
-    SPEED_COEF = 0.34143006
+    ANGLE_COEF = 89.20767214
+    ANGLE_COEF2 = 0.20369467
+    ANGLE_OFFSET = 0.#17140063
+    SPEED_OFFSET = 30.08002220
+    SIGMOID_COEF_RIGHT = 0.52104735
+    SIGMOID_COEF_LEFT = 0.54360152
+    SPEED_COEF = 2.00000000
     x = ANGLE_COEF * (desired_lateral_accel + ANGLE_OFFSET) * (40.23 / (max(0.05,speed + SPEED_OFFSET))**SPEED_COEF)
     sigmoid = erf(x)
-    return ((SIGMOID_COEF_RIGHT if (desired_lateral_accel + ANGLE_OFFSET) < 0. else SIGMOID_COEF_LEFT) * sigmoid) + ANGLE_COEF2 * (desired_lateral_accel + ANGLE_OFFSET)
+    return ((SIGMOID_COEF_RIGHT if (desired_lateral_accel + ANGLE_OFFSET) < 0. else SIGMOID_COEF_LEFT) * sigmoid) + ANGLE_COEF2 * (desired_lateral_accel + ANGLE_OFFSET)  
   
   @staticmethod
   def get_steer_feedforward_silverado(desired_angle, v_ego):

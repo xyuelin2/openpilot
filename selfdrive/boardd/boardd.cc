@@ -27,7 +27,7 @@
 #include "common/swaglog.h"
 #include "common/timing.h"
 #include "common/util.h"
-#include "selfdrive/hardware/hw.h"
+#include "system/hardware/hw.h"
 
 #include "selfdrive/boardd/pigeon.h"
 
@@ -193,9 +193,11 @@ Panda *usb_connect(std::string serial="", uint32_t index=0) {
     return nullptr;
   }
 
+  // common panda config
   if (getenv("BOARDD_LOOPBACK")) {
     panda->set_loopback(true);
   }
+  panda->enable_deepsleep();
 
   // power on charging, only the first time. Panda can also change mode and it causes a brief disconneciton
 #ifndef __x86_64__
@@ -405,17 +407,12 @@ void send_peripheral_state(PubMaster *pm, Panda *panda) {
   auto ps = evt.initPeripheralState();
   ps.setPandaType(panda->hw_type);
 
-  if (Hardware::TICI()) {
-    double read_time = millis_since_boot();
-    ps.setVoltage(std::atoi(util::read_file("/sys/class/hwmon/hwmon1/in1_input").c_str()));
-    ps.setCurrent(std::atoi(util::read_file("/sys/class/hwmon/hwmon1/curr1_input").c_str()));
-    read_time = millis_since_boot() - read_time;
-    if (read_time > 50) {
-      LOGW("reading hwmon took %lfms", read_time);
-    }
-  } else {
-    ps.setVoltage(pandaState.voltage_pkt);
-    ps.setCurrent(pandaState.current_pkt);
+  double read_time = millis_since_boot();
+  ps.setVoltage(Hardware::get_voltage());
+  ps.setCurrent(Hardware::get_current());
+  read_time = millis_since_boot() - read_time;
+  if (read_time > 50) {
+    LOGW("reading hwmon took %lfms", read_time);
   }
 
   uint16_t fan_speed_rpm = panda->get_fan_speed();
@@ -534,9 +531,7 @@ void peripheral_control_thread(Panda *panda) {
       int cur_integ_lines = event.getDriverCameraState().getIntegLines();
       float cur_gain = event.getDriverCameraState().getGain();
 
-      if (Hardware::TICI()) {
-        cur_integ_lines = integ_lines_filter.update(cur_integ_lines * cur_gain);
-      }
+      cur_integ_lines = integ_lines_filter.update(cur_integ_lines * cur_gain);
       last_front_frame_t = event.getLogMonoTime();
 
       if (cur_integ_lines <= CUTOFF_IL) {

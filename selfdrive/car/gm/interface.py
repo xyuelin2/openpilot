@@ -4,16 +4,20 @@ from math import fabs
 
 from common.conversions import Conversions as CV
 from common.params import Params
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
-from selfdrive.car.gm.values import CAR, CruiseButtons, \
-                                     CarControllerParams, NO_ASCM
+from selfdrive.car import STD_CARGO_KG, create_button_enable_events, create_button_event, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, get_safety_config
+from selfdrive.car.gm.values import CAR, CruiseButtons, CarControllerParams, NO_ASCM
 from selfdrive.car.interfaces import CarInterfaceBase
 
 ButtonType = car.CarState.ButtonEvent.Type
 EventName = car.CarEvent.EventName
 GearShifter = car.CarState.GearShifter
+TransmissionType = car.CarParams.TransmissionType
+NetworkLocation = car.CarParams.NetworkLocation
+BUTTONS_DICT = {CruiseButtons.RES_ACCEL: ButtonType.accelCruise, CruiseButtons.DECEL_SET: ButtonType.decelCruise,
+                CruiseButtons.MAIN: ButtonType.altButton3, CruiseButtons.CANCEL: ButtonType.cancel}
 
-class CarInterface(CarInterfaceBase):
+
+class CarInterface(CarInterfaceBase):  
   @staticmethod
   def get_pid_accel_limits(CP, current_speed, cruise_speed):
     params = CarControllerParams()
@@ -45,12 +49,12 @@ class CarInterface(CarInterfaceBase):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
-    ret.alternativeExperience = 1 # UNSAFE_DISABLE_DISENGAGE_ON_GAS # TODO: JJS this value should come from the toggle
-    ret.pcmCruise = False  # stock cruise control is kept off for vehicles with an ASCM
-    # For vehicle that are using the stock ACC (presently either )
-    ret.openpilotLongitudinalControl = True # ASCM vehicles use OP for long
-    ret.radarOffCan = False # ASCM vehicles (typically) have radar TODO: This should be detected from the fingerprint, not assumed
-
+    ret.pcmCruise = False  # For ASCM, stock non-adaptive cruise control is kept off
+    ret.radarOffCan = False  # For ASCM, radar exists
+    ret.transmissionType = TransmissionType.automatic
+    # NetworkLocation.gateway: OBD-II harness (typically ASCM), NetworkLocation.fwdCamera: non-ASCM
+    ret.networkLocation = NetworkLocation.gateway
+    
     # I'm not sure it's normal to read from Params() in interface.py... but
     # It seems the values populated in controlsd.py are set after this
     # Meaning the option wasn't returning true _in here_
@@ -80,12 +84,11 @@ class CarInterface(CarInterfaceBase):
       
     tire_stiffness_factor = 0.444  # not optimized yet
 
-    # Start with a baseline lateral tuning for all GM vehicles. Override tuning as needed in each model section below.
+    # Start with a baseline tuning for all GM vehicles. Override tuning as needed in each model section below.
     ret.minSteerSpeed = 7 * CV.MPH_TO_MS
     ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
     ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.2], [0.00]]
     ret.lateralTuning.pid.kf = 0.00004   # full torque for 20 deg at 80mph means 0.00007818594
-    ret.steerRateCost = 0.5
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.enableGasInterceptor = 0x201 in fingerprint[0]
     # # Check for Electronic Parking Brake
@@ -103,31 +106,52 @@ class CarInterface(CarInterfaceBase):
     
     if ret.enableGasInterceptor:
       ret.openpilotLongitudinalControl = True
-    
+
+    ret.longitudinalTuning.kpBP = [5., 35.]
+    ret.longitudinalTuning.kpV = [2.4, 1.5]
+    ret.longitudinalTuning.kiBP = [0.]
+    ret.longitudinalTuning.kiV = [0.36]
+
+    ret.steerLimitTimer = 0.4
+    ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
+
+    # supports stop and go, but initial engage must (conservatively) be above 18mph
+    ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+
     if candidate == CAR.VOLT or candidate == CAR.VOLT_NR:
-      # supports stop and go, but initial engage must be above 18mph (which include conservatism)
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
+      ret.transmissionType = TransmissionType.direct
       ret.mass = 1607. + STD_CARGO_KG
       ret.wheelbase = 2.69
       ret.steerRatio = 17.7  # Stock 15.7, LiveParameters
-      tire_stiffness_factor = 0.469 # Stock Michelin Energy Saver A/S, LiveParameters
-      ret.steerRatioRear = 0.
-      ret.centerToFront = ret.wheelbase * 0.45 # Volt Gen 1, TODO corner weigh
+      tire_stiffness_factor = 0.469  # Stock Michelin Energy Saver A/S, LiveParameters
+      ret.centerToFront = ret.wheelbase * 0.45  # Volt Gen 1, TODO corner weigh
 
       ret.lateralTuning.pid.kpBP = [0., 40.]
       ret.lateralTuning.pid.kpV = [0., 0.17]
       ret.lateralTuning.pid.kiBP = [0.]
       ret.lateralTuning.pid.kiV = [0.]
-      ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_volt()
+      ret.lateralTuning.pid.kf = 1.  # get_steer_feedforward_volt()
       ret.steerActuatorDelay = 0.2
 
+      if ret.enableGasInterceptor:
+        ret.minEnableSpeed = -1
+        #Note: Low speed, stop and go not tested. Should be fairly smooth on highway
+        ret.longitudinalTuning.kpBP = [0., 35.0]
+        ret.longitudinalTuning.kpV = [0.4, 0.06] 
+        ret.longitudinalTuning.kiBP = [0., 35.0] 
+        ret.longitudinalTuning.kiV = [0.0, 0.04]
+        ret.longitudinalTuning.kf = 0.25
+        ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
+        ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+        # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
+        ret.stoppingControl = True
+
     elif candidate == CAR.MALIBU or candidate == CAR.MALIBU_NR:
-      # supports stop and go, but initial engage must be above 18mph (which include conservatism)
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 1496. + STD_CARGO_KG
       ret.wheelbase = 2.83
       ret.steerRatio = 15.8
-      ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4  # wild guess
 
     elif candidate == CAR.HOLDEN_ASTRA:
@@ -135,33 +159,26 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.662
       # Remaining parameters copied from Volt for now
       ret.centerToFront = ret.wheelbase * 0.4
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.steerRatio = 15.7
-      ret.steerRatioRear = 0.
 
     elif candidate == CAR.ACADIA or candidate == CAR.ACADIA_NR:
       ret.minEnableSpeed = -1.  # engage speed is decided by pcm
       ret.mass = 4353. * CV.LB_TO_KG + STD_CARGO_KG
       ret.wheelbase = 2.86
       ret.steerRatio = 14.4  # end to end is 13.46
-      ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4
-      ret.lateralTuning.pid.kf = 1. # get_steer_feedforward_acadia()
+      ret.lateralTuning.pid.kf = 1.  # get_steer_feedforward_acadia()
 
     elif candidate == CAR.BUICK_REGAL:
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 3779. * CV.LB_TO_KG + STD_CARGO_KG  # (3849+3708)/2
       ret.wheelbase = 2.83  # 111.4 inches in meters
       ret.steerRatio = 14.4  # guess for tourx
-      ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.4  # guess for tourx
 
     elif candidate == CAR.CADILLAC_ATS:
-      ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 1601. + STD_CARGO_KG
       ret.wheelbase = 2.78
       ret.steerRatio = 15.3
-      ret.steerRatioRear = 0.
       ret.centerToFront = ret.wheelbase * 0.49
 
     elif candidate == CAR.ESCALADE_ESV:
@@ -187,30 +204,40 @@ class CarInterface(CarInterfaceBase):
       # TODO: Improve stability in turns 
       # still working on improving lateral
       
-      # TODO: Should steerRateCost and ActuatorDelay be converted to BPV arrays?
+      # TODO: Should ActuatorDelay be converted to BPV arrays?
       # TODO: Check if the actuator delay changes based on vehicle speed
-      ret.steerRateCost = 0.5
       ret.steerActuatorDelay = 0.
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
       ret.lateralTuning.pid.kf = 0.0002
       
-      # TODO: Needs refinement for stop and go, doesn't fully stop
-      # Assumes the Bolt is using L-Mode for regen braking
-      ret.longitudinalTuning.kpBP = [0., 35]
-      ret.longitudinalTuning.kpV = [0.21, 0.46] 
-      ret.longitudinalTuning.kiBP = [0., 35.] 
-      ret.longitudinalTuning.kiV = [0.22, 0.33]
-      ret.stoppingDecelRate = 0.17  # reach stopping target smoothly, brake_travel/s while trying to stop
-      ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
-      ret.vEgoStopping = 0.6  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
-      ret.vEgoStarting = 0.6  # Speed at which the car goes into starting state, when car starts requesting starting accel,
-      # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
-      ret.stoppingControl = True
-      ret.longitudinalTuning.deadzoneBP = [0.]
-      ret.longitudinalTuning.deadzoneV = [0.]
       
-      
+      if ret.enableGasInterceptor:
+        #Note: Low speed, stop and go not tested. Should be fairly smooth on highway
+        ret.longitudinalTuning.kpBP = [0., 35.0]
+        ret.longitudinalTuning.kpV = [0.4, 0.06] 
+        ret.longitudinalTuning.kiBP = [0., 35.0] 
+        ret.longitudinalTuning.kiV = [0.0, 0.04]
+        ret.longitudinalTuning.kf = 0.25
+        ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
+        ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+        # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
+        ret.stoppingControl = True
+
+        # You can see how big the changes are with the new approach
+
+        # darknight11's tuning efforts using old pedal transform
+        # ret.longitudinalTuning.kpBP = [0., 35]
+        # ret.longitudinalTuning.kpV = [0.21, 0.46] 
+        # ret.longitudinalTuning.kiBP = [0., 35.] 
+        # ret.longitudinalTuning.kiV = [0.22, 0.33]
+        # ret.stoppingDecelRate = 0.17  # reach stopping target smoothly, brake_travel/s while trying to stop
+        # ret.stopAccel = 0. # Required acceleraton to keep vehicle stationary
+        # ret.vEgoStopping = 0.6  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+        # ret.vEgoStarting = 0.6  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+
     elif candidate == CAR.EQUINOX_NR:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 3500. * CV.LB_TO_KG + STD_CARGO_KG # (3849+3708)/2
@@ -252,7 +279,6 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.3
       ret.pcmCruise = True # TODO: see if this resolves cruiseMismatch
       ret.centerToFront = ret.wheelbase * .49
-      ret.steerRateCost = .4
       ret.steerActuatorDelay = 0.11
       # ret.lateralTuning.pid.kpBP = [i * CV.MPH_TO_MS for i in [15., 80.]]
       # ret.lateralTuning.pid.kpV = [0.13, 0.23]
@@ -313,7 +339,6 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 1.0
       # TODO: Improve stability in turns 
       # still working on improving lateral
-      ret.steerRateCost = 0.5
       ret.steerActuatorDelay = 0.
       ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 41.0], [10., 41.0]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18, 0.275], [0.01, 0.021]]
@@ -350,34 +375,18 @@ class CarInterface(CarInterfaceBase):
   def _update(self, c):
     ret = self.CS.update(self.cp, self.cp_loopback, self.cp_body)
 
-    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
-
-    buttonEvents = []
-
     if self.CS.cruise_buttons != self.CS.prev_cruise_buttons and self.CS.prev_cruise_buttons != CruiseButtons.INIT:
-      be = car.CarState.ButtonEvent.new_message()
-      be.type = ButtonType.unknown
-      if self.CS.cruise_buttons != CruiseButtons.UNPRESS:
-        be.pressed = True
-        but = self.CS.cruise_buttons
-      else:
-        be.pressed = False
-        but = self.CS.prev_cruise_buttons
-      if but == CruiseButtons.RES_ACCEL:
-        if not (ret.cruiseState.enabled and ret.standstill):
-          be.type = ButtonType.accelCruise  # Suppress resume button if we're resuming from stop so we don't adjust speed.
-      elif but == CruiseButtons.DECEL_SET:
-        be.type = ButtonType.decelCruise
-      elif but == CruiseButtons.CANCEL:
-        be.type = ButtonType.cancel
-      elif but == CruiseButtons.MAIN:
-        be.type = ButtonType.altButton3
-      buttonEvents.append(be)
+      be = create_button_event(self.CS.cruise_buttons, self.CS.prev_cruise_buttons, BUTTONS_DICT, CruiseButtons.UNPRESS)
 
-    ret.buttonEvents = buttonEvents
-    # TODO: JJS Move this to appropriate place (check other brands)
-    EXTRA_GEARS = [GearShifter.sport, GearShifter.low, GearShifter.eco, GearShifter.manumatic]
-    events = self.create_common_events(ret, extra_gears = EXTRA_GEARS, pcm_enable=self.CS.CP.pcmCruise)
+      # Suppress resume button if we're resuming from stop so we don't adjust speed.
+      if be.type == ButtonType.accelCruise and (ret.cruiseState.enabled and ret.standstill):
+        be.type = ButtonType.unknown
+
+      ret.buttonEvents = [be]
+
+    events = self.create_common_events(ret, extra_gears=[GearShifter.sport, GearShifter.low,
+                                                         GearShifter.eco, GearShifter.manumatic],
+                                       pcm_enable=self.CP.pcmCruise)
 
     if ret.vEgo < self.CP.minEnableSpeed:
       events.add(EventName.belowEngageSpeed)
@@ -387,18 +396,11 @@ class CarInterface(CarInterfaceBase):
       events.add(car.CarEvent.EventName.belowSteerSpeed)
 
     # handle button presses
-    for b in ret.buttonEvents:
-      # do enable on both accel and decel buttons
-      if b.type in (ButtonType.accelCruise, ButtonType.decelCruise) and not b.pressed:
-        events.add(EventName.buttonEnable)
-      # do disable on button down
-      if b.type == ButtonType.cancel and b.pressed:
-        events.add(EventName.buttonCancel)
+    events.events.extend(create_button_enable_events(ret.buttonEvents, pcm_cruise=self.CP.pcmCruise))
 
     ret.events = events.to_msg()
 
     return ret
 
   def apply(self, c):
-    ret = self.CC.update(c, self.CS)
-    return ret
+    return self.CC.update(c, self.CS)

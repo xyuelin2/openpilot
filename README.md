@@ -1,44 +1,70 @@
-openpilot - GM Vehicle Extensions
-------
+# OPGM - Wide compatibility openpilot port collection for GM Vehicles
 
-Provides basic support for GM vehicles with LKAS that do not have an ASCM, including (but not limited to):
-* Chevy Bolt EV
-* Chevy Volt
-* Chevy Equinox
-* Cadillac Escalade
-* GMC Acadia & Acadia Denali
-* Chevy Malibu
-* Chevy Tahoe
-* Chevy Silverado
-* Chevy Suburban
-
-WARNING: Comma 2 support has been removed. It was not my decision, and I
-consider it grossly unethical.
-
-~~Restores support for the Grey and White Panda (although you will get bad GPS warnings with a white panda).~~
-
-Port is intended to be upstreamed when complete, thus _should_ work with all vehicles normally supported by openpilot. However, it presently contains firmware for the Pedal Interceptor that is GM-specific.
-
-
-Persistent Branches:
-* dev - Bleeding edge active development. Based on comma.ai's master branch and may be very broken.
-* main - Semi-"stable" development branch, probably aligned with comma.ai release.
-* release - (Not yet available) Packaged release - installs much faster, probably the most stable.
-
-
-![](https://i.imgur.com/b0ZyIx5.jpg)
+[![Chevy Equinox](https://img.youtube.com/vi/JzvtlIAAfkI/hqdefault.jpg)](http://www.youtube.com/watch?v=JzvtlIAAfkI "Step-by-step: Getting openpilot steering a 2020 Equinox")
 
 Table of Contents
 =======================
 
+* [What is OPGM?](#what-is-opgm)
 * [What is openpilot?](#what-is-openpilot)
-* [Running in a car](#running-in-a-car)
+* [Running in a car](#running-on-a-dedicated-device-in-a-car)
 * [Running on PC](#running-on-pc)
 * [Community and Contributing](#community-and-contributing)
 * [User Data and comma Account](#user-data-and-comma-account)
 * [Safety and Testing](#safety-and-testing)
 * [Directory Structure](#directory-structure)
 * [Licensing](#licensing)
+
+---
+
+What is OPGM?
+------
+
+OPGM is a fork of openpilot that enables level-2 autonomous driving support for many GM Vehicles not yet supported by comma.ai.
+This fork is regularly updated with the official upstream openpilot, typicically within a few days of
+their master branch (bleeding edge). The goal has always been to seek to upstream as much as possible,
+and we are remarkably close: the Silverado, GMC Sierra and Bolt EUV will likely be gaining
+official comma.ai support in the next few upstream releases. The Suburban, Tahoe, and 2022 Bolt EV LT2
+should be inbound very soon thereafter!
+
+The GM Camera Harness (previously referred to as the [Bolt EV Harness](https://oshwlab.com/jshuler/chevy-bolt-openpilot-harness)
+(See link for schematic) is also on the path to official support.
+It has been 3 LONG years in the making, but it looks like finally the goal is in sight!
+
+This support will effectively open the door for **official comma.ai support** (no need for custom Forks or hardware)
+for **ANY** GM vehicle with Lane-Keep Assist and Adaptive Cruise Control manufactured between 2016 and 2022 (with some exceptions...)
+
+OPGM isn't going anywhere any time soon either. Vehicles without built-in Adaptive Cruise will continue
+to be supported in OPGM with the use of a [Comma Pedal](https://github.com/commaai/openpilot/wiki/comma-pedal).
+I'm hoping to continue supporting the Comma 2, EON, and White/black panda hardware as long as possible
+(Note that this has been on hold due to upstreaming efforts)
+
+Don't feel like waiting for the upstream? You will need to purchase a few things.
+Get the following two products from comma.ai:
+
+* [comma three](https://comma.ai/shop/products/three) - Do not select a vehicle or harness in this step
+* [harness box](https://comma.ai/shop/products/harness-box)
+
+You will also need the GM Camera harness - you can make it yourself or buy one from BearTechWorkshop run by Discord user tinybear
+
+* [GM Camera Harness](https://www.etsy.com/listing/1067463521/harness-for-chevrolet-bolt-high-country)
+  * Note: I am submitting the schematics to comma.ai as part of the Silverado port - I expect they will eventually take over the manufacture
+* **Only if your car doesn't have Adaptive Cruise** [Comma Pedal](https://www.etsy.com/listing/952895642/openpilot-comma-pedal-non-customizable)
+  * Note 1: OPGM uses openpilot's vision-only ACC, which is not yet supported by comma.ai
+  * Note 2: The Pedal (currently) requires custom GM firmware (from the OPGM repo); flashing requires a special cable (you can also build yourself, buy from comma or tinybear)
+  * Note 3: OP with a Pedal performing ACC on a gas-powered vehicle is unable to apply the brakes (yet) - it still works well enough in many cases
+
+You can also hop on the [openpilot Community Discord](https://discord.gg/paWZxDcmqD) and / or the [official comma.ai Discord](https://discord.comma.ai) should you need assistance, or want to inquire about a new model.
+
+**OPGM is just as free and open source as openpilot... except all the effort is volunteer**. While never required, if you
+find this useful and would like to help keep it going, consider a donation!
+
+* [Donate via Paypal](https://paypal.me/jjshuler42)
+* [Donate via Venmo](https://venmo.com/JasonJShuler)
+* [Donate via Cash App](https://cash.app/$wibbleywobblrs)
+
+If you would like a shoutout on the [Stand Back Labs Youtube Channel](https://youtube.com/standbacklabs) please mention it in the
+comments!
 
 ---
 
@@ -63,16 +89,17 @@ What is openpilot?
 </table>
 
 
-Running in a car
+Running on a dedicated device in a car
 ------
 
 To use openpilot in a car, you need four things
-* This software. It's free and available right here.
+* A supported device to run this software: a [comma three](https://comma.ai/shop/products/three).
+* This software. The setup procedure of the comma three allows the user to enter a url for custom software.
+The url, openpilot.comma.ai will install the release version of openpilot. To install openpilot master, you can use installer.comma.ai/commaai/master, and replacing commaai with another github username can install a fork.
 * One of [the 150+ supported cars](docs/CARS.md). We support Honda, Toyota, Hyundai, Nissan, Kia, Chrysler, Lexus, Acura, Audi, VW, and more. If your car is not supported, but has adaptive cruise control and lane keeping assist, it's likely able to run openpilot.
-* A supported device to run this software: a [comma three](https://comma.ai/shop/products/three), or if you like to experiment, a [Ubuntu computer with webcams](https://github.com/commaai/openpilot/tree/master/tools/webcam).
-* A way to connect to your car. With a comma three, you need only a [car harness](https://comma.ai/shop/products/car-harness). With a PC, you also need a [black panda](https://comma.ai/shop/products/panda).
+* A [car harness](https://comma.ai/shop/products/car-harness) to connect to your car.
 
-We have detailed instructions for [how to install the device in a car](https://comma.ai/setup).
+We have detailed instructions for [how to mount the device in a car](https://comma.ai/setup).
 
 Running on PC
 ------
@@ -83,6 +110,7 @@ With openpilot's tools you can plot logs, replay drives and watch the full-res c
 
 You can also run openpilot in simulation [with the CARLA simulator](tools/sim/README.md). This allows openpilot to drive around a virtual car on your Ubuntu machine. The whole setup should only take a few minutes, but does require a decent GPU.
 
+A PC running openpilot can also control your vehicle if it is connected to a [a webcam](https://github.com/commaai/openpilot/tree/master/tools/webcam), a [black panda](https://comma.ai/shop/products/panda), and [a harness](https://comma.ai/shop/products/car-harness).
 
 Community and Contributing
 ------
@@ -130,20 +158,25 @@ Directory Structure
     ├── panda               # Code used to communicate on CAN
     ├── third_party         # External libraries
     ├── pyextra             # Extra python packages
+    └── system              # Generic services
+        ├── camerad         # Driver to capture images from the camera sensors
+        ├── clocksd         # Broadcasts current time
+        ├── hardware        # Hardware abstraction classes
+        ├── logcatd         # systemd journal as a service
+        └── proclogd        # Logs information from /proc
     └── selfdrive           # Code needed to drive the car
         ├── assets          # Fonts, images, and sounds for UI
         ├── athena          # Allows communication with the app
         ├── boardd          # Daemon to talk to the board
-        ├── camerad         # Driver to capture images from the camera sensors
         ├── car             # Car specific code to read states and control actuators
-        ├── common          # Shared C/C++ code for the daemons
         ├── controls        # Planning and controls
         ├── debug           # Tools to help you debug and do car ports
         ├── locationd       # Precise localization and vehicle parameter estimation
-        ├── logcatd         # Android logcat as a service
         ├── loggerd         # Logger and uploader of car data
+        ├── manager         # Deamon that starts/stops all other daemons as needed
         ├── modeld          # Driving and monitoring model runners
-        ├── proclogd        # Logs information from proc
+        ├── monitoring      # Daemon to determine driver attention
+        ├── navd            # Turn-by-turn navigation
         ├── sensord         # IMU interface code
         ├── test            # Unit tests, system tests, and a car simulator
         └── ui              # The UI

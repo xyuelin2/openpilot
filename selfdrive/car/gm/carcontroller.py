@@ -4,7 +4,7 @@ from common.numpy_fast import interp, clip
 from selfdrive.config import Conversions as CV
 from selfdrive.car import apply_std_steer_torque_limits, create_gas_interceptor_command
 from selfdrive.car.gm import gmcan
-from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams
+from selfdrive.car.gm.values import DBC, NO_ASCM, CanBus, CarControllerParams, CAR
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -73,7 +73,10 @@ class CarController():
         # TODO: Should all instances of "enabled" be replaced with c.active?
         at_full_stop = enabled and CS.out.standstill
         near_stop = enabled and (CS.out.vEgo < P.NEAR_STOP_BRAKE_PHASE)
-        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
+        if CS.CP.carFingerprint == CAR.BOLT_EUV_NR:
+          can_sends.append(gmcan.create_friction_brake_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_brake, idx, near_stop, at_full_stop))
+        else:
+          can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
         can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, enabled, at_full_stop))
 
       # Send dashboard UI commands (ACC status), 25hz
@@ -86,13 +89,13 @@ class CarController():
       time_and_headlights_step = 10
       tt = frame * DT_CTRL
 
-      if frame % time_and_headlights_step == 0:
+      if frame % time_and_headlights_step == 0 and CS.CP.carFingerprint != CAR.BOLT_EUV_NR:
         idx = (frame // time_and_headlights_step) % 4
         can_sends.append(gmcan.create_adas_time_status(CanBus.OBSTACLE, int((tt - self.start_time) * 60), idx))
         can_sends.append(gmcan.create_adas_headlights_status(self.packer_obj, CanBus.OBSTACLE))
 
       speed_and_accelerometer_step = 2
-      if frame % speed_and_accelerometer_step == 0:
+      if frame % speed_and_accelerometer_step == 0 and CS.CP.carFingerprint != CAR.BOLT_EUV_NR:
         idx = (frame // speed_and_accelerometer_step) % 4
         can_sends.append(gmcan.create_adas_steering_status(CanBus.OBSTACLE, idx))
         can_sends.append(gmcan.create_adas_accelerometer_speed_status(CanBus.OBSTACLE, CS.out.vEgo, idx))
@@ -162,7 +165,7 @@ class CarController():
     lka_active = CS.lkas_status == 1
     lka_critical = lka_active and abs(actuators.steer) > 0.9
     lka_icon_status = (lka_active, lka_critical)
-    if frame % P.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last:
+    if CS.CP.carFingerprint != CAR.BOLT_EUV_NR and frame % P.CAMERA_KEEPALIVE_STEP == 0 or lka_icon_status != self.lka_icon_status_last:
       steer_alert = hud_alert in (VisualAlert.steerRequired, VisualAlert.ldw)
       can_sends.append(gmcan.create_lka_icon_command(CanBus.SW_GMLAN, lka_active, lka_critical, steer_alert))
       self.lka_icon_status_last = lka_icon_status

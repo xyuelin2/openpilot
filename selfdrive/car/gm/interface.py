@@ -382,7 +382,31 @@ class CarInterface(CarInterfaceBase):
       ret.openpilotLongitudinalControl = False # Using Stock ACC
       ret.radarOffCan = True # No Radar
       # Note: No Long tuning as we are using stock long
-    
+
+    elif candidate == CAR.BOLT_EUV_NR:
+      ret.minEnableSpeed = -1
+      ret.minSteerSpeed = 5 * CV.MPH_TO_MS
+      ret.mass = 1616. + STD_CARGO_KG
+      ret.wheelbase = 2.60096
+      ret.steerRatio = 16.8
+      ret.steerRatioRear = 0.
+      ret.centerToFront = 2.0828 #ret.wheelbase * 0.4 # wild guess
+      tire_stiffness_factor = 1.0
+      # TODO: Improve stability in turns 
+      # still working on improving lateral
+      ret.steerRateCost = 0.5
+      ret.steerActuatorDelay = 0.
+      ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kiBP = [[10., 40.0], [0., 40.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.1, 0.22], [0.01, 0.021]]
+      ret.lateralTuning.pid.kdBP = [0.]
+      ret.lateralTuning.pid.kdV = [0.6]
+      ret.lateralTuning.pid.kf = 1. # use with get_feedforward_bolt_euv
+      ret.pcmCruise = False # TODO: see if this resolves cruiseMismatch
+      ret.openpilotLongitudinalControl = True # Using Stock ACC
+      ret.radarOffCan = True # No Radar
+      # Note: Camera in EUV sans ACC still sends acc messages
+      # We will try VOACC
+
     if candidate in HIGH_TORQUE:
       ret.safetyConfigs[0].safetyParam = 1 # set appropriate safety param for increased torque limits to match values.py
          

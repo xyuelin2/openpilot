@@ -206,13 +206,14 @@ class CarInterface(CarInterfaceBase):
       ret.pcmCruise = True  # TODO: see if this resolves cruiseMismatch
       ret.openpilotLongitudinalControl = False  # ASCM vehicles use OP for long
       ret.radarOffCan = True  # ASCM vehicles (typically) have radar
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
-      ret.lateralTuning.init('torque')
-      ret.lateralTuning.torque.useSteeringAngle = True
-      ret.lateralTuning.torque.kp = 0.8
-      ret.lateralTuning.torque.kf = 0.4
-      ret.lateralTuning.torque.ki = 0.2
-      ret.lateralTuning.torque.friction = 0.1
+      # ret.lateralTuning.init('torque')
+      # ret.lateralTuning.torque.useSteeringAngle = True
+      # ret.lateralTuning.torque.kp = 0.8
+      # ret.lateralTuning.torque.kf = 0.4
+      # ret.lateralTuning.torque.ki = 0.2
+      # ret.lateralTuning.torque.friction = 0.1
 
     # TODO: start from empirically derived lateral slip stiffness for the civic and scale by
     # mass and CG position, so all cars will have approximately similar dyn behaviors

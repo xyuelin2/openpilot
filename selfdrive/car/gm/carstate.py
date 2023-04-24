@@ -1,9 +1,15 @@
+import math
+
 from cereal import car
 from common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
 from opendbc.can.parser import CANParser
 from selfdrive.car.interfaces import CarStateBase
-from selfdrive.car.gm.values import DBC, CAR, AccState, CanBus, STEER_THRESHOLD
+from selfdrive.car.gm.values import DBC, CAR, AccState, CanBus, STEER_THRESHOLD, CC_ONLY_CAR
+
+
+GearShifter = car.CarState.GearShifter
+PEDAL_HYST_GAP = 0.01
 
 
 class CarState(CarStateBase):
@@ -12,6 +18,8 @@ class CarState(CarStateBase):
     can_define = CANDefine(DBC[CP.carFingerprint]["pt"])
     self.shifter_values = can_define.dv["ECMPRDNL"]["PRNDL"]
     self.lka_steering_cmd_counter = 0
+    self.single_pedal_mode = False
+    self.pedal_steady = 0.
 
   def update(self, pt_cp, loopback_cp):
     ret = car.CarState.new_message()
@@ -33,8 +41,12 @@ class CarState(CarStateBase):
     ret.brakePressed = pt_cp.vl["ECMEngineStatus"]["Brake_Pressed"] != 0
     ret.brake = pt_cp.vl["EBCMBrakePedalPosition"]["BrakePedalPosition"] / 0xd0
 
-    ret.gas = pt_cp.vl["AcceleratorPedal2"]["AcceleratorPedal2"] / 254.
-    ret.gasPressed = ret.gas > 1e-5
+    if self.CP.enableGasInterceptor:
+      ret.gas = (pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS"] + pt_cp.vl["GAS_SENSOR"]["INTERCEPTOR_GAS2"]) / 2.
+      ret.gasPressed = ret.gas > 15
+    else:
+      ret.gas = pt_cp.vl["AcceleratorPedal2"]["AcceleratorPedal2"] / 254.
+      ret.gasPressed = ret.gas > 1e-5
 
     ret.steeringAngleDeg = pt_cp.vl["PSCMSteeringAngle"]["SteeringWheelAngle"]
     ret.steeringRateDeg = pt_cp.vl["PSCMSteeringAngle"]["SteeringWheelRate"]
@@ -65,11 +77,18 @@ class CarState(CarStateBase):
     self.pcm_acc_status = pt_cp.vl["AcceleratorPedal2"]["CruiseState"]
 
     # Regen braking is braking
-    if self.car_fingerprint == CAR.VOLT:
+    if self.car_fingerprint in (CAR.VOLT, CAR.VOLT_CC):
       ret.brakePressed = ret.brakePressed or pt_cp.vl["EBCMRegenPaddle"]["RegenPaddle"] != 0
+      self.single_pedal_mode = ret.gearShifter == GearShifter.low
 
     ret.cruiseState.enabled = self.pcm_acc_status != AccState.OFF
     ret.cruiseState.standstill = self.pcm_acc_status == AccState.STANDSTILL
+
+    if self.CP.carFingerprint == CAR.VOLT_CC:
+      ret.accFaulted = False
+    if self.CP.enableGasInterceptor:  # Flip CC main logic when pedal is being used for long TODO: switch to cancel cc
+      ret.cruiseState.available = (not ret.cruiseState.available)
+      ret.accFaulted = False
 
     return ret
 
@@ -120,9 +139,14 @@ class CarState(CarStateBase):
       ("EBCMBrakePedalPosition", 100),
     ]
 
-    if CP.carFingerprint == CAR.VOLT:
+    if CP.carFingerprint in (CAR.VOLT, CAR.VOLT_CC):
       signals.append(("RegenPaddle", "EBCMRegenPaddle"))
       checks.append(("EBCMRegenPaddle", 50))
+
+    if CP.enableGasInterceptor:
+      signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR"))
+      signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR"))
+      checks.append(("GAS_SENSOR", 50))
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus.POWERTRAIN)
 
@@ -137,3 +161,16 @@ class CarState(CarStateBase):
     ]
 
     return CANParser(DBC[CP.carFingerprint]["pt"], signals, checks, CanBus.LOOPBACK)
+
+  @staticmethod
+  def actuator_hystereses(final_pedal, pedal_steady):
+    """for small pedal oscillations within pedal_hyst_gap, don't change the pedal command"""
+    if math.isclose(final_pedal, 0.0):
+      pedal_steady = 0.
+    elif final_pedal > pedal_steady + PEDAL_HYST_GAP:
+      pedal_steady = final_pedal - PEDAL_HYST_GAP
+    elif final_pedal < pedal_steady - PEDAL_HYST_GAP:
+      pedal_steady = final_pedal + PEDAL_HYST_GAP
+    final_pedal = pedal_steady
+
+    return final_pedal, pedal_steady

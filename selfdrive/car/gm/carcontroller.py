@@ -74,9 +74,13 @@ class CarController:
 
       at_full_stop = CC.longActive and CS.out.standstill
       near_stop = CC.longActive and (CS.out.vEgo < self.params.NEAR_STOP_BRAKE_PHASE)
-      # GasRegenCmdActive needs to be 1 to avoid cruise faults. It describes the ACC state, not actuation
-      can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, CC.enabled, at_full_stop))
-      can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
+
+      if CS.CP.enableGasInterceptor:
+        can_sends.append(gmcan.create_gm_pedal_interceptor_command(self.packer_pt, CS, CC, actuators, idx))
+      else:
+        # GasRegenCmdActive needs to be 1 to avoid cruise faults. It describes the ACC state, not actuation
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, self.apply_gas, idx, CC.enabled, at_full_stop))
+        can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, CanBus.CHASSIS, self.apply_brake, idx, near_stop, at_full_stop))
 
     # Send dashboard UI commands (ACC status), 25hz
     if (self.frame % 4) == 0:

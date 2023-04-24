@@ -31,7 +31,7 @@ class CarInterface(CarInterfaceBase):
     return 0.04689655 * sigmoid * (v_ego + 10.028217)
 
   def get_steer_feedforward_function(self):
-    if self.CP.carFingerprint == CAR.VOLT:
+    if self.CP.carFingerprint in (CAR.VOLT, CAR.VOLT_CC):
       return self.get_steer_feedforward_volt
     elif self.CP.carFingerprint == CAR.ACADIA:
       return self.get_steer_feedforward_acadia
@@ -44,6 +44,7 @@ class CarInterface(CarInterfaceBase):
     ret.carName = "gm"
     ret.safetyConfigs = [get_safety_config(car.CarParams.SafetyModel.gm)]
     ret.pcmCruise = False  # stock cruise control is kept off
+    ret.enableGasInterceptor = 0x201 in fingerprint[0]
 
     # These cars have been put into dashcam only due to both a lack of users and test coverage.
     # These cars likely still work fine. Once a user confirms each car works and a test route is
@@ -64,7 +65,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 1.0
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
 
-    if candidate == CAR.VOLT:
+    if candidate in (CAR.VOLT, CAR.VOLT_CC):
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       ret.mass = 1607. + STD_CARGO_KG
@@ -135,6 +136,22 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kf = 0.000045
       tire_stiffness_factor = 1.0
 
+    if ret.enableGasInterceptor:
+      ret.minEnableSpeed = -1
+      ret.pcmCruise = False
+      ret.openpilotLongitudinalControl = True
+      # Note: Low speed, stop and go not tested. Should be fairly smooth on highway
+      ret.longitudinalTuning.kpV = [0.4, 0.06]
+      ret.longitudinalTuning.kiBP = [0., 35.0]
+      ret.longitudinalTuning.kiV = [0.0, 0.04]
+      ret.longitudinalTuning.kiV = [0.0, 0.04]
+      ret.longitudinalTuning.kf = 0.3
+      ret.stoppingDecelRate = 0.8  # reach stopping target smoothly, brake_travel/s while trying to stop
+      ret.vEgoStopping = 0.5  # Speed at which the car goes into stopping state, when car starts requesting stopping accel
+      ret.vEgoStarting = 0.5  # Speed at which the car goes into starting state, when car starts requesting starting accel,
+      # vEgoStarting needs to be > or == vEgoStopping to avoid state transition oscillation
+      ret.stoppingControl = True
+
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase
     ret.rotationalInertia = scale_rot_inertia(ret.mass, ret.wheelbase)
@@ -203,6 +220,9 @@ class CarInterface(CarInterfaceBase):
       # do disable on button down
       if b.type == ButtonType.cancel and b.pressed:
         events.add(EventName.buttonCancel)
+
+    if self.CP.enableGasInterceptor and not self.CS.single_pedal_mode:
+      events.add(EventName.brakeUnavailable)
 
     ret.events = events.to_msg()
 

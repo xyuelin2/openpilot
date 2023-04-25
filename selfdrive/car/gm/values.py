@@ -71,7 +71,7 @@ CAR_INFO: Dict[str, Union[CarInfo, List[CarInfo]]] = {
   CAR.ACADIA: CarInfo("GMC Acadia 2018", "Adaptive Cruise", video_link="https://www.youtube.com/watch?v=0ZN6DdsBUZo", footnotes=[Footnote.OBD_II]),
   CAR.BUICK_REGAL: CarInfo("Buick Regal Essence 2018", "Adaptive Cruise"),
   CAR.ESCALADE_ESV: CarInfo("Cadillac Escalade ESV 2016", "ACC + LKAS", footnotes=[Footnote.OBD_II]),
-  CAR.VOLT_CC: CarInfo("Chevrolet Volt No ACC"),
+  CAR.VOLT_CC: CarInfo("Chevrolet Volt No ACC", "No ACC"),
 }
 
 

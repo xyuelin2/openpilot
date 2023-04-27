@@ -84,11 +84,8 @@ class CarState(CarStateBase):
     ret.cruiseState.enabled = self.pcm_acc_status != AccState.OFF
     ret.cruiseState.standstill = self.pcm_acc_status == AccState.STANDSTILL
 
-    if self.CP.carFingerprint == CAR.VOLT_CC:
-      ret.accFaulted = False
     if self.CP.enableGasInterceptor:  # Flip CC main logic when pedal is being used for long TODO: switch to cancel cc
       ret.cruiseState.available = (not ret.cruiseState.available)
-      ret.accFaulted = False
 
     return ret
 

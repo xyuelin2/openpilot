@@ -795,9 +795,9 @@ EVENTS: Dict[int, Dict[str, Union[Alert, AlertCallbackType]]] = {
   },
 
   EventName.brakeUnavailable: {
-    ET.IMMEDIATE_DISABLE: no_braking_alert(ImmediateDisableAlert, "Cruise Fault: Restart the Car"),
-    ET.PERMANENT: no_braking_alert(NormalPermanentAlert, "Cruise Fault: Restart the car to engage"),
-    ET.NO_ENTRY: no_braking_alert(NoEntryAlert, "Cruise Fault: Restart the Car"),
+    ET.IMMEDIATE_DISABLE: ImmediateDisableAlert("Shift To L To Use Pedal Interceptor"),
+    ET.PERMANENT: NormalPermanentAlert("Shift To L To Use Pedal Interceptor"),
+    ET.NO_ENTRY: NoEntryAlert("Shift To L To Use Pedal Interceptor"),
   },
 
   EventName.reverseGear: {

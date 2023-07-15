@@ -39,7 +39,7 @@ for r in routes:
 test_cases: List[Tuple[str, Optional[CarTestRoute]]] = []
 for i, c in enumerate(sorted(all_known_cars())):
   if i % NUM_JOBS == JOB_ID:
-    test_cases.extend((c, r) for r in routes_by_car.get(c, (None, )))
+    test_cases.extend(sorted((c, r) for r in routes_by_car.get(c, (None, ))))
 
 SKIP_ENV_VAR = "SKIP_LONG_TESTS"
 
@@ -103,7 +103,7 @@ class TestCarModelBase(unittest.TestCase):
     cls.can_msgs = sorted(can_msgs, key=lambda msg: msg.logMonoTime)
 
     cls.CarInterface, cls.CarController, cls.CarState = interfaces[cls.car_model]
-    cls.CP = cls.CarInterface.get_params(cls.car_model, fingerprint, car_fw, experimental_long)
+    cls.CP = cls.CarInterface.get_params(cls.car_model, fingerprint, car_fw, experimental_long, docs=False)
     assert cls.CP
     assert cls.CP.carFingerprint == cls.car_model
 
@@ -149,7 +149,7 @@ class TestCarModelBase(unittest.TestCase):
 
     for i, msg in enumerate(self.can_msgs):
       CS = self.CI.update(CC, (msg.as_builder().to_bytes(),))
-      self.CI.apply(CC)
+      self.CI.apply(CC, msg.logMonoTime)
 
       if CS.canValid:
         can_valid = True
@@ -214,7 +214,7 @@ class TestCarModelBase(unittest.TestCase):
     for can in self.can_msgs[:300]:
       self.CI.update(CC, (can.as_builder().to_bytes(), ))
       for msg in filter(lambda m: m.src in range(64), can.can):
-        to_send = libpanda_py.make_CANPacket(msg.address, msg.src, msg.dat)
+        to_send = libpanda_py.make_CANPacket(msg.address, msg.src % 4, msg.dat)
         self.safety.safety_rx_hook(to_send)
 
     controls_allowed_prev = False
@@ -238,14 +238,14 @@ class TestCarModelBase(unittest.TestCase):
       # TODO: check rest of panda's carstate (steering, ACC main on, etc.)
 
       checks['gasPressed'] += CS.gasPressed != self.safety.get_gas_pressed_prev()
-      if self.CP.carName not in ("hyundai", "volkswagen", "body"):
+      if self.CP.carName not in ("hyundai", "body"):
         # TODO: fix standstill mismatches for other makes
         checks['standstill'] += CS.standstill == self.safety.get_vehicle_moving()
 
       # TODO: remove this exception once this mismatch is resolved
       brake_pressed = CS.brakePressed
       if CS.brakePressed and not self.safety.get_brake_pressed_prev():
-        if self.CP.carFingerprint in (HONDA.PILOT, HONDA.PASSPORT, HONDA.RIDGELINE) and CS.brake > 0.05:
+        if self.CP.carFingerprint in (HONDA.PILOT, HONDA.RIDGELINE) and CS.brake > 0.05:
           brake_pressed = False
       checks['brakePressed'] += brake_pressed != self.safety.get_brake_pressed_prev()
       checks['regenBraking'] += CS.regenBraking != self.safety.get_regen_braking_prev()

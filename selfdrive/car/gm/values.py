@@ -43,7 +43,12 @@ class CarControllerParams:
       self.INACTIVE_REGEN = 1554
       # Camera ACC vehicles have no regen while enabled.
       # Camera transitions to MAX_ACC_REGEN from ZERO_GAS and uses friction brakes instantly
-      max_regen_acceleration = 0.
+      if CP.carFingerprint == CAR.BOLT_EUV and CP.enableGasInterceptor:
+        # Bolt can achieve regen by using a comma pedal instead of ACC commands.
+        #  Measured at 25 m/s, appears to increase in magnitude roughly linearly with speed until -2.2 m/s^2 at 2 m/s.
+        max_regen_acceleration = -1.5
+      else:
+        max_regen_acceleration = 0.
 
     else:
       self.MAX_GAS = 3072  # Safety limit, not ACC max. Stock ACC >4096 from standstill.
@@ -145,6 +150,7 @@ class CanBus:
 
 
 GM_RX_OFFSET = 0x400
+PEDAL_MSG = 0x201
 
 DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict('gm_global_a_powertrain_generated', 'gm_global_a_object', chassis_dbc='gm_global_a_chassis'))
 

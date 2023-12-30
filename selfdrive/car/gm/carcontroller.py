@@ -124,8 +124,10 @@ class CarController:
           # Throttle controlled by interceptor, send inactive regen to avoid cruise fault
           pcm_gas = self.params.INACTIVE_REGEN
           self.apply_gas = interceptor_gas_cmd
+          gas_long_active = False
         else:
           self.apply_gas = pcm_gas
+          gas_long_active = CC.enabled
 
         at_full_stop = CC.longActive and CS.out.standstill
         near_stop = CC.longActive and (CS.out.vEgo < self.params.NEAR_STOP_BRAKE_PHASE)
@@ -137,7 +139,7 @@ class CarController:
           friction_brake_bus = CanBus.POWERTRAIN
 
         # GasRegenCmdActive needs to be 1 to avoid cruise faults. It describes the ACC state, not actuation
-        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, pcm_gas, idx, CC.enabled, at_full_stop))
+        can_sends.append(gmcan.create_gas_regen_command(self.packer_pt, CanBus.POWERTRAIN, pcm_gas, idx, gas_long_active, at_full_stop))
         can_sends.append(gmcan.create_friction_brake_command(self.packer_ch, friction_brake_bus, self.apply_brake,
                                                              idx, CC.enabled, near_stop, at_full_stop, self.CP))
 
@@ -164,13 +166,6 @@ class CarController:
 
       if self.CP.networkLocation == NetworkLocation.gateway and self.frame % self.params.ADAS_KEEPALIVE_STEP == 0:
         can_sends += gmcan.create_adas_keepalive(CanBus.POWERTRAIN)
-
-      # TODO: integrate this with the code block below?
-      if self.CP.enableGasInterceptor and CS.out.cruiseState.enabled:
-        # Spam cancel stock ACC if we are using pedal for long
-        if (self.frame - self.last_button_frame) * DT_CTRL > 0.04:
-          self.last_button_frame = self.frame
-          can_sends.append(gmcan.create_buttons(self.packer_pt, CanBus.POWERTRAIN, (CS.buttons_counter + 1) % 4, CruiseButtons.CANCEL))
 
     else:
       # While car is braking, cancel button causes ECM to enter a soft disable state with a fault status.

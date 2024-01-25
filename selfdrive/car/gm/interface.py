@@ -251,6 +251,19 @@ class CarInterface(CarInterfaceBase):
       ret.tireStiffnessFactor = 1.0
       ret.steerActuatorDelay = 0.2
       CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
+      
+    elif candidate == CAR.SUBURBAN_2019:
+      ret.mass = 5809. * CV.LB_TO_KG # average of suburban and yukon xl
+      ret.wheelbase = 3.3
+      ret.steerRatio = 17.3
+      ret.centerToFront = ret.wheelbase * 0.5
+      ret.tireStiffnessFactor = 1.0
+      # On the Bolt, the ECM and camera independently check that you are either above 5 kph or at a stop
+      # with foot on brake to allow engagement, but this platform only has that check in the camera.
+      # TODO: check if this is split by EV/ICE with more platforms in the future
+      if ret.openpilotLongitudinalControl:
+        ret.minEnableSpeed = -1.
+      CarInterfaceBase.configure_torque_tune(candidate, ret.lateralTuning)
 
     return ret
 

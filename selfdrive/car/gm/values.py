@@ -153,6 +153,6 @@ DBC: Dict[str, Dict[str, str]] = defaultdict(lambda: dbc_dict('gm_global_a_power
 EV_CAR = {CAR.VOLT, CAR.BOLT_EUV}
 
 # We're integrated at the camera with VOACC on these cars (instead of ASCM w/ OBD-II harness)
-CAMERA_ACC_CAR = {CAR.BOLT_EUV, CAR.SILVERADO, CAR.EQUINOX, CAR.TRAILBLAZER}
+CAMERA_ACC_CAR = {CAR.BOLT_EUV, CAR.SILVERADO, CAR.EQUINOX, CAR.TRAILBLAZER, CAR.SUBURBAN_2019}
 
 STEER_THRESHOLD = 1.0

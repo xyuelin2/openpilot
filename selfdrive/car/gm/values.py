@@ -211,7 +211,6 @@ class CAR(Platforms):
     CarSpecs(mass=1660, wheelbase=2.78, steerRatio=14.4, centerToFrontRatio=0.4),
   )
   BABYENCLAVE = GMPlatformConfig(
-    "BUICK BABY ENCLAVE 2020",
     [GMCarDocs("Buick Baby Enclave 2020-23")],
     CarSpecs(mass=2050, wheelbase=2.86, steerRatio=16.0, centerToFrontRatio=0.5),
   )
